@@ -1,0 +1,5 @@
+name: STEMCraftLib
+version: '1.0'
+main: com.stemcraft.STEMCraftLib
+api-version: '1.21'
+provides: STEMCraftLib
