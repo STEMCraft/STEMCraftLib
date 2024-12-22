@@ -8,11 +8,10 @@ import java.util.regex.Pattern;
 import java.util.function.BiFunction;
 
 public class VariableManager {
-    private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{([^}]+)}");
-    private static final Map<String, BiFunction<Player, String, String>> variables = new HashMap<>();
+    private final Pattern VARIABLE_PATTERN = Pattern.compile("\\{([^}]+)}");
+    private final Map<String, BiFunction<Player, String, String>> variables = new HashMap<>();
 
-    static {
-        // Initialize default global variables
+    public VariableManager() {
         register("player", (player, variable) -> player.getName());
         register("world", (player, variable) -> player.getWorld().getName());
     }
@@ -23,7 +22,7 @@ public class VariableManager {
      * @param name   The name of the variable (without braces).
      * @param method The method to handle the variable replacement.
      */
-    public static void register(String name, BiFunction<Player, String, String> method) {
+    public void register(String name, BiFunction<Player, String, String> method) {
         variables.put(name.toLowerCase(), method);
     }
 
@@ -34,7 +33,7 @@ public class VariableManager {
      * @param text   The text containing variables to replace.
      * @return The text with all variables replaced.
      */
-    public static String replace(Player player, String text) {
+    public String parse(Player player, String text) {
         String result = text;
         boolean containsVariables;
 
@@ -50,6 +49,9 @@ public class VariableManager {
 
                 if (method != null) {
                     String replacement = method.apply(player, variableName);
+                    if(replacement == null) {
+                        replacement = "";
+                    }
                     matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
                 } else {
                     matcher.appendReplacement(sb, Matcher.quoteReplacement(matcher.group(0)));
@@ -68,7 +70,7 @@ public class VariableManager {
      * @param name The name of the variable to check.
      * @return true if the variable is registered, false otherwise.
      */
-    public static boolean exists(String name) {
+    public boolean exists(String name) {
         return variables.containsKey(name.toLowerCase());
     }
 
@@ -77,7 +79,7 @@ public class VariableManager {
      *
      * @param name The name of the variable to remove.
      */
-    public static void unregister(String name) {
+    public void unregister(String name) {
         variables.remove(name.toLowerCase());
     }
 }
