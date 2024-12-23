@@ -3,13 +3,16 @@ package com.stemcraft;
 import com.stemcraft.variable.VariableManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public final class STEMCraftLib extends JavaPlugin {
+import java.util.logging.Level;
+
+public class STEMCraftLib extends JavaPlugin {
     private static STEMCraftLib instance;
     private final VariableManager variableManager = new VariableManager();
 
     @Override
     public void onEnable() {
         instance = this;
+        getLogger().log(Level.INFO, "STEMCraftLib Loaded");
     }
 
     @Override
