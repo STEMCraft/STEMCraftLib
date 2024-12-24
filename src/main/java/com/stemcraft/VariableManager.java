@@ -1,4 +1,4 @@
-package com.stemcraft.variable;
+package com.stemcraft;
 
 import org.bukkit.entity.Player;
 import java.util.HashMap;
