@@ -50,7 +50,7 @@ public class STEMCraftLib extends JavaPlugin {
      * @param worldB World B to test
      * @return If both world names are in the same realm
      */
-    public boolean worldsPartOfSameRealm(World worldA, World worldB) {
+    public boolean worldsInSameRealm(World worldA, World worldB) {
         String worldAName = worldA.getName().toLowerCase();
         String worldBName = worldB.getName().toLowerCase();
 
