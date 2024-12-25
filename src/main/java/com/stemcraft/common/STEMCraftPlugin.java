@@ -5,11 +5,17 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -163,6 +169,64 @@ public class STEMCraftPlugin extends JavaPlugin {
      */
     public void registerTabCompletion(String key, Supplier<List<String>> method) {
         lib.getTabCompletionManager().register(key, method);
+    }
+
+    /**
+     * Returns true if the player is a bedrock player
+     * @param player The player to test
+     * @return If the player is using bedrock
+     */
+    public boolean isBedrockPlayer(Player player) {
+        return lib.isBedrockPlayer(player);
+    }
+
+    /**
+     * Adds an attribute to the ItemStack with the given key and value.
+     *
+     * @param item The ItemStack to modify.
+     * @param key The key for the attribute.
+     * @param value The value for the attribute.
+     */
+    public <T, Z> void itemAddAttrib(ItemStack item, String key, T value) {
+        lib.itemAddAttrib(item, key, value);
+    }
+
+    /**
+     * Checks if the ItemStack has an attribute with the given key.
+     *
+     * @param item The ItemStack to check.
+     * @param key The key for the attribute.
+     * @return true if the attribute exists, false otherwise.
+     */
+    public boolean itemHasAttrib(ItemStack item, String key) {
+        return lib.itemHasAttrib(item, key);
+    }
+
+    /**
+     * Removes an attribute from the ItemStack with the given key.
+     *
+     * @param item The ItemStack to modify.
+     * @param key The key for the attribute to remove.
+     */
+    public void itemRemoveAttrib(ItemStack item, String key) {
+        lib.itemRemoveAttrib(item, key);
+    }
+
+    /**
+     * Retrieves an attribute from the ItemStack with the given key or returns a default value if not found.
+     *
+     * @param item The ItemStack to check.
+     * @param key The key for the attribute.
+     * @param typeClass The class of the type you're expecting (String.class, Byte.class, etc.).
+     * @param defaultValue The default value to return if the attribute is not found or there's an issue.
+     * @return The value of the attribute or the default value.
+     */
+    public static <T, Z> T itemGetAttrib(ItemStack item, String key, Class<T> typeClass, T defaultValue) {
+        return lib.itemGetAttrib(item, key, typeClass, defaultValue);
+    }
+
+    public static <T, Z> T itemGetAttrib(ItemStack item, String key, Class<T> typeClass) {
+        return lib.itemGetAttrib(item, key, typeClass, null);
     }
 
     /**
