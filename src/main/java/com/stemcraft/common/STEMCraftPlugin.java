@@ -16,8 +16,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.List;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 
+/**
+ * STEMCraft Plugin Base
+ */
 public class STEMCraftPlugin extends JavaPlugin {
     private static STEMCraftPlugin instance;
     private static STEMCraftLib lib;
@@ -28,22 +33,49 @@ public class STEMCraftPlugin extends JavaPlugin {
         lib = (STEMCraftLib)Bukkit.getServer().getPluginManager().getPlugin("STEMCraftLib");
     }
 
+    /**
+     * Get the instance of the STEMCraftLib
+     *
+     * @return The instance of the STEMCraftLib
+     */
     public STEMCraftLib getSTEMCraftLib() {
         return lib;
     }
 
+    /**
+     * Does the STEMCraftLib support an attribute
+     *
+     * @param attribute The attribute to trest
+     * @return If the attribute is supported
+     */
     public boolean supports(String attribute) {
         return lib.supports(attribute);
+    }
+
+    /**
+     * Write a message to the server log
+     * @param level The message level
+     * @param string The message string
+     * @param throwable The exception to log
+     */
+    public void log(Level level, String string, Throwable throwable) {
+        getLogger().log(level, string, throwable);
     }
 
     public void log(Level level, String string) {
         getLogger().log(level, string);
     }
 
-    public void log(Level level, String string, Throwable throwable) {
-        getLogger().log(level, string, throwable);
+    public void log(String string) {
+        getLogger().log(Level.INFO, string);
     }
 
+    /**
+     * Display a message to the console or player
+     * @param sender The player to send the message to
+     * @param message The message string. Supports placeholders
+     * @param args The placeholders to replace in the message in a "find", "replace" format
+     */
     public void message(CommandSender sender, String message, String... args) {
         if (args.length % 2 != 0) {
             throw new IllegalArgumentException("Args must be in pairs of placeholder and value");
@@ -63,15 +95,21 @@ public class STEMCraftPlugin extends JavaPlugin {
         sender.sendMessage(component);
     }
 
+    /**
+     * Register events located in the listener class
+     *
+     * @param listener The class that contains the events
+     */
     public void registerEvents(Listener listener) {
         getServer().getPluginManager().registerEvents(listener, this);
     }
 
-    public void registerCommand(STEMCraftCommand executor) {
-        String command = executor.getClass().getSimpleName().toLowerCase();
-        registerCommand(executor, command);
-    }
-
+    /**
+     * Register a command on the server
+     *
+     * @param executor The class containing the command methods
+     * @param command The optional command name. If not used, the command will be the lowercase class name of executor
+     */
     public void registerCommand(STEMCraftCommand executor, String command) {
         CommandMap commandMap = getCommandMap();
         PluginCommand pluginCommand = null;
@@ -104,12 +142,36 @@ public class STEMCraftPlugin extends JavaPlugin {
         }
     }
 
+    public void registerCommand(STEMCraftCommand executor) {
+        String command = executor.getClass().getSimpleName().toLowerCase();
+        registerCommand(executor, command);
+    }
+
+    /**
+     * Register a new tab completion key for commands
+     * @param key The tab completion key
+     * @param args An array of valid values for the key
+     */
     public void registerTabCompletion(String key, String ...args) {
         lib.getTabCompletionManager().register(key, () -> {
             return Arrays.asList(args);
         });
     }
 
+    /**
+     * Register a new tab completion key for commands
+     * @param key The tab completion key
+     * @param method A supplier that returns valid values for the key
+     */
+    public void registerTabCompletion(String key, Supplier<List<String>> method) {
+        lib.getTabCompletionManager().register(key, method);
+    }
+
+    /**
+     * Return the command map structure for the server
+     *
+     * @return The command map for the server
+     */
     private static CommandMap getCommandMap() {
         try {
             Server server = instance.getServer();
