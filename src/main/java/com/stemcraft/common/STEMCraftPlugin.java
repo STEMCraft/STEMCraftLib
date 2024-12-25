@@ -45,7 +45,7 @@ public class STEMCraftPlugin extends JavaPlugin {
     /**
      * Does the STEMCraftLib support an attribute
      *
-     * @param attribute The attribute to trest
+     * @param attribute The attribute to test
      * @return If the attribute is supported
      */
     public boolean supports(String attribute) {
