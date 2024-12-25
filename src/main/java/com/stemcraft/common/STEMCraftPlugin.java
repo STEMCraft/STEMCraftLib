@@ -153,9 +153,7 @@ public class STEMCraftPlugin extends JavaPlugin {
      * @param args An array of valid values for the key
      */
     public void registerTabCompletion(String key, String ...args) {
-        lib.getTabCompletionManager().register(key, () -> {
-            return Arrays.asList(args);
-        });
+        lib.getTabCompletionManager().register(key, () -> Arrays.asList(args));
     }
 
     /**
