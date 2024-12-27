@@ -21,7 +21,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -115,11 +117,12 @@ public class STEMCraftPlugin extends JavaPlugin {
      *
      * @param executor The class containing the command methods
      * @param command The optional command name. If not used, the command will be the lowercase class name of executor
+     * @param aliases The optional aliases for the command
+     * @param tabCompletions The tab completions for the command
      */
-    public void registerCommand(STEMCraftCommand executor, String command) {
+    public void registerCommand(STEMCraftCommand executor, String command, List<String> aliases, List<String[]> tabCompletions) {
         CommandMap commandMap = getCommandMap();
         PluginCommand pluginCommand = null;
-        executor.setSTEMCraftPlugin(instance);
 
         if(commandMap == null) {
             log(Level.SEVERE, "Could not get the server command map");
@@ -136,11 +139,15 @@ public class STEMCraftPlugin extends JavaPlugin {
         }
 
         if(pluginCommand != null) {
-            if (!executor.getAliasList().isEmpty()) {
-                pluginCommand.setAliases(executor.getAliasList());
+            if (aliases != null && !aliases.isEmpty()) {
+                pluginCommand.setAliases(aliases);
             }
 
-            pluginCommand.setTabCompleter(executor);
+            if(tabCompletions != null && !tabCompletions.isEmpty()) {
+                tabCompletions.forEach(executor::addTabCompletion);
+                pluginCommand.setTabCompleter(executor);
+            }
+
             pluginCommand.setExecutor(executor);
             commandMap.register(command, "stemcraft", pluginCommand);
         } else {
@@ -148,9 +155,28 @@ public class STEMCraftPlugin extends JavaPlugin {
         }
     }
 
+    public void registerCommand(STEMCraftCommand executor, String command, String aliases, String tabCompletions) {
+        List<String> aliasList;
+        List<String[]> tabCompletionsList;
+
+        if(aliases != null) {
+            aliasList = Arrays.asList(aliases.split(" "));
+        } else {
+            aliasList = new ArrayList<>();
+        }
+
+        if(tabCompletions != null) {
+            tabCompletionsList = Collections.singletonList(tabCompletions.split(" "));
+        } else {
+            tabCompletionsList = new ArrayList<>();
+        }
+
+        registerCommand(executor, command, aliasList, tabCompletionsList);
+    }
+
     public void registerCommand(STEMCraftCommand executor) {
         String command = executor.getClass().getSimpleName().toLowerCase();
-        registerCommand(executor, command);
+        registerCommand(executor, command, (List<String>) null, null);
     }
 
     /**
