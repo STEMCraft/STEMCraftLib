@@ -40,7 +40,7 @@ public class SCPlayer {
      * @param player The player to base the head on.
      * @return The item stack containing the players head.
      */
-    public ItemStack getHead(Player player) {
+    public static ItemStack getHead(Player player) {
         if(player == null) {
             return null;
         }
