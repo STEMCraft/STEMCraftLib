@@ -17,6 +17,16 @@ public class SCTabCompletion {
     }
 
     /**
+     * Registers a new completions method.
+     *
+     * @param name   The name of the variable (without braces).
+     * @param args   The list of strings to display.
+     */
+    public static void register(String name, String... args) {
+        register(name, () -> Arrays.asList(args));
+    }
+
+    /**
      * Checks if a completions with the given name is registered.
      *
      * @param name The name of the completion to check.
