@@ -146,11 +146,8 @@ public class STEMCraftLib extends JavaPlugin {
      * @param message The message to write
      */
     public static void message(CommandSender sender, String message) {
-        String miniMessageString = LegacyComponentSerializer.legacyAmpersand().serialize(
-            LegacyComponentSerializer.legacyAmpersand().deserialize(((sender instanceof Player) ? messagePrefix : "") + message)
-        );
-
-        Component component = MiniMessage.miniMessage().deserialize(miniMessageString);
+        String fullMessage = ((sender instanceof Player) ? messagePrefix : "") + message;
+        Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(fullMessage);
         sender.sendMessage(component);
     }
 
@@ -186,11 +183,8 @@ public class STEMCraftLib extends JavaPlugin {
      * @param message The message to write
      */
     public static void info(CommandSender sender, String message) {
-        String miniMessageString = LegacyComponentSerializer.legacyAmpersand().serialize(
-                LegacyComponentSerializer.legacyAmpersand().deserialize(((sender instanceof Player) ? infoPrefix : "") + message)
-        );
-
-        Component component = MiniMessage.miniMessage().deserialize(miniMessageString);
+        String fullMessage = ((sender instanceof Player) ? infoPrefix : "") + message;
+        Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(fullMessage);
         sender.sendMessage(component);
     }
 
@@ -226,11 +220,8 @@ public class STEMCraftLib extends JavaPlugin {
      * @param message The message to write
      */
     public static void warning(CommandSender sender, String message) {
-        String miniMessageString = LegacyComponentSerializer.legacyAmpersand().serialize(
-                LegacyComponentSerializer.legacyAmpersand().deserialize(((sender instanceof Player) ? warningPrefix : "") + message)
-        );
-
-        Component component = MiniMessage.miniMessage().deserialize(miniMessageString);
+        String fullMessage = ((sender instanceof Player) ? warningPrefix : "") + message;
+        Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(fullMessage);
         sender.sendMessage(component);
     }
 
@@ -266,11 +257,8 @@ public class STEMCraftLib extends JavaPlugin {
      * @param message The message to write
      */
     public static void error(CommandSender sender, String message) {
-        String miniMessageString = LegacyComponentSerializer.legacyAmpersand().serialize(
-                LegacyComponentSerializer.legacyAmpersand().deserialize(((sender instanceof Player) ? errorPrefix : "") + message)
-        );
-
-        Component component = MiniMessage.miniMessage().deserialize(miniMessageString);
+        String fullMessage = ((sender instanceof Player) ? errorPrefix : "") + message;
+        Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(fullMessage);
         sender.sendMessage(component);
     }
 
@@ -306,11 +294,8 @@ public class STEMCraftLib extends JavaPlugin {
      * @param message The message to write
      */
     public static void success(CommandSender sender, String message) {
-        String miniMessageString = LegacyComponentSerializer.legacyAmpersand().serialize(
-                LegacyComponentSerializer.legacyAmpersand().deserialize(((sender instanceof Player) ? successPrefix : "") + message)
-        );
-
-        Component component = MiniMessage.miniMessage().deserialize(miniMessageString);
+        String fullMessage = ((sender instanceof Player) ? successPrefix : "") + message;
+        Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(fullMessage);
         sender.sendMessage(component);
     }
 
