@@ -70,12 +70,12 @@ public class STEMCraftLib extends JavaPlugin {
             "plugin_base",
             "register_event",
             "register_command",
-            "variables",
             "tab_completion",
             "message",
             "log",
             "bedrock",
-            "item_attrib"
+            "item_attrib",
+            "player_heads"
         };
 
         for (String attr : supportedAttributes) {
