@@ -1,28 +1,10 @@
-package com.stemcraft;
-
-import lombok.Getter;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.bukkit.World;
+package com.stemcraft.util;
 
 import java.util.*;
 import java.util.function.Supplier;
 
-@Getter
-public class TabCompletionManager {
-    private final Map<String, Supplier<List<String>>> completions = new HashMap<>();
-
-    public TabCompletionManager() {
-        register("player", () -> Bukkit.getServer().getOnlinePlayers().stream()
-            .map(Player::getName)
-            .toList()
-        );
-
-        register("world", () -> Bukkit.getServer().getWorlds().stream()
-            .map(World::getName)
-            .toList()
-        );
-    }
+public class SCTabCompletion {
+    private static final Map<String, Supplier<List<String>>> completions = new HashMap<>();
 
     /**
      * Registers a new completions method.
@@ -30,7 +12,7 @@ public class TabCompletionManager {
      * @param name   The name of the variable (without braces).
      * @param method The method to handle the variable replacement.
      */
-    public void register(String name, Supplier<List<String>> method) {
+    public static void register(String name, Supplier<List<String>> method) {
         completions.put(name.toLowerCase(), method);
     }
 
@@ -40,7 +22,7 @@ public class TabCompletionManager {
      * @param name The name of the completion to check.
      * @return true if the completion is registered, false otherwise.
      */
-    public boolean exists(String name) {
+    public static boolean exists(String name) {
         return completions.containsKey(name.toLowerCase());
     }
 
@@ -49,15 +31,15 @@ public class TabCompletionManager {
      *
      * @param name The name of the completion to remove.
      */
-    public void unregister(String name) {
+    public static void unregister(String name) {
         completions.remove(name.toLowerCase());
     }
 
-    public Set<String> keys() {
+    public static Set<String> keys() {
         return completions.keySet();
     }
 
-    public List<String> list(String key) {
+    public static List<String> list(String key) {
         if(completions.containsKey(key)) {
             return completions.get(key).get();
         }

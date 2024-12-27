@@ -1,6 +1,6 @@
 package com.stemcraft.exception;
 
-import com.stemcraft.common.STEMCraftPlugin;
+import com.stemcraft.STEMCraftPlugin;
 
 import java.util.ArrayList;
 import java.util.Arrays;

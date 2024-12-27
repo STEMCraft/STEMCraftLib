@@ -1,21 +1,10 @@
-package com.stemcraft.common;
+package com.stemcraft;
 
-import com.stemcraft.STEMCraftLib;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
 import org.bukkit.command.CommandMap;
-import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -25,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.logging.Level;
 
 /**
@@ -57,7 +45,7 @@ public class STEMCraftPlugin extends JavaPlugin {
      * @return If the attribute is supported
      */
     public boolean supports(String attribute) {
-        return lib.supports(attribute);
+        return STEMCraftLib.supports(attribute);
     }
 
     /**
@@ -76,31 +64,6 @@ public class STEMCraftPlugin extends JavaPlugin {
 
     public void log(String string) {
         getLogger().log(Level.INFO, string);
-    }
-
-    /**
-     * Display a message to the console or player
-     * @param sender The player to send the message to
-     * @param message The message string. Supports placeholders
-     * @param args The placeholders to replace in the message in a "find", "replace" format
-     */
-    public void message(CommandSender sender, String message, String... args) {
-        if (args.length % 2 != 0) {
-            throw new IllegalArgumentException("Args must be in pairs of placeholder and value");
-        }
-
-        for (int i = 0; i < args.length; i += 2) {
-            String placeholder = "{" + args[i] + "}";
-            String value = args[i + 1];
-            message = message.replace(placeholder, value);
-        }
-
-        String miniMessageString = LegacyComponentSerializer.legacyAmpersand().serialize(
-                LegacyComponentSerializer.legacyAmpersand().deserialize(message)
-        );
-
-        Component component = MiniMessage.miniMessage().deserialize(miniMessageString);
-        sender.sendMessage(component);
     }
 
     /**
@@ -174,85 +137,13 @@ public class STEMCraftPlugin extends JavaPlugin {
         registerCommand(executor, command, aliasList, tabCompletionsList);
     }
 
+    public void registerCommand(STEMCraftCommand executor, String command) {
+        registerCommand(executor, command, (List<String>)null, null);
+    }
+
     public void registerCommand(STEMCraftCommand executor) {
         String command = executor.getClass().getSimpleName().toLowerCase();
         registerCommand(executor, command, (List<String>) null, null);
-    }
-
-    /**
-     * Register a new tab completion key for commands
-     * @param key The tab completion key
-     * @param args An array of valid values for the key
-     */
-    public void registerTabCompletion(String key, String ...args) {
-        lib.getTabCompletionManager().register(key, () -> Arrays.asList(args));
-    }
-
-    /**
-     * Register a new tab completion key for commands
-     * @param key The tab completion key
-     * @param method A supplier that returns valid values for the key
-     */
-    public void registerTabCompletion(String key, Supplier<List<String>> method) {
-        lib.getTabCompletionManager().register(key, method);
-    }
-
-    /**
-     * Returns true if the player is a bedrock player
-     * @param player The player to test
-     * @return If the player is using bedrock
-     */
-    public boolean isBedrockPlayer(Player player) {
-        return lib.isBedrockPlayer(player);
-    }
-
-    /**
-     * Adds an attribute to the ItemStack with the given key and value.
-     *
-     * @param item The ItemStack to modify.
-     * @param key The key for the attribute.
-     * @param value The value for the attribute.
-     */
-    public <T, Z> void itemAddAttrib(ItemStack item, String key, T value) {
-        lib.itemAddAttrib(item, key, value);
-    }
-
-    /**
-     * Checks if the ItemStack has an attribute with the given key.
-     *
-     * @param item The ItemStack to check.
-     * @param key The key for the attribute.
-     * @return true if the attribute exists, false otherwise.
-     */
-    public boolean itemHasAttrib(ItemStack item, String key) {
-        return lib.itemHasAttrib(item, key);
-    }
-
-    /**
-     * Removes an attribute from the ItemStack with the given key.
-     *
-     * @param item The ItemStack to modify.
-     * @param key The key for the attribute to remove.
-     */
-    public void itemRemoveAttrib(ItemStack item, String key) {
-        lib.itemRemoveAttrib(item, key);
-    }
-
-    /**
-     * Retrieves an attribute from the ItemStack with the given key or returns a default value if not found.
-     *
-     * @param item The ItemStack to check.
-     * @param key The key for the attribute.
-     * @param typeClass The class of the type you're expecting (String.class, Byte.class, etc.).
-     * @param defaultValue The default value to return if the attribute is not found or there's an issue.
-     * @return The value of the attribute or the default value.
-     */
-    public static <T, Z> T itemGetAttrib(ItemStack item, String key, Class<T> typeClass, T defaultValue) {
-        return lib.itemGetAttrib(item, key, typeClass, defaultValue);
-    }
-
-    public static <T, Z> T itemGetAttrib(ItemStack item, String key, Class<T> typeClass) {
-        return lib.itemGetAttrib(item, key, typeClass, null);
     }
 
     /**

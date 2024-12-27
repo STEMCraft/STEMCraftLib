@@ -1,35 +1,85 @@
-package com.stemcraft.common;
+package com.stemcraft;
 
-import com.stemcraft.STEMCraftLib;
-import com.stemcraft.TabCompletionManager;
-import lombok.Getter;
-import lombok.Setter;
+import com.stemcraft.util.SCTabCompletion;
 import org.bukkit.command.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class STEMCraftCommand implements TabExecutor {
-    private static STEMCraftLib lib;
-
     private final List<String[]> tabCompletionList = new ArrayList<>();
 
-    public STEMCraftCommand(STEMCraftLib lib) {
-        STEMCraftCommand.lib = lib;
-    }
-
+    /**
+     * Add a tab completion list to the command
+     * @param args The array of tab completion items
+     */
     public void addTabCompletion(String... args) {
         tabCompletionList.add(args);
     }
 
+    /**
+     * Called when the console or player executes the command
+     * @param sender The sender of the command.
+     * @param command The command name.
+     * @param args The command arguments.
+     */
     public void execute(CommandSender sender, String command, List<String> args) {
         // empty
     }
 
+    /**
+     * Display a message to the command sender
+     * @param sender The command sender.
+     * @param message The message to send.
+     * @param args The message placeholders to replace.
+     */
     public void message(CommandSender sender, String message, String... args) {
-        lib.message(sender, message, args);
+        STEMCraftLib.message(sender, message, args);
     }
 
+    /**
+     * Display a info message to the command sender
+     * @param sender The command sender.
+     * @param message The message to send.
+     * @param args The message placeholders to replace.
+     */
+    public void info(CommandSender sender, String message, String... args) {
+        STEMCraftLib.info(sender, message, args);
+    }
+
+    /**
+     * Display a warning message to the command sender
+     * @param sender The command sender.
+     * @param message The message to send.
+     * @param args The message placeholders to replace.
+     */
+    public void warning(CommandSender sender, String message, String... args) {
+        STEMCraftLib.warning(sender, message, args);
+    }
+
+    /**
+     * Display a error message to the command sender
+     * @param sender The command sender.
+     * @param message The message to send.
+     * @param args The message placeholders to replace.
+     */
+    public void error(CommandSender sender, String message, String... args) {
+        STEMCraftLib.error(sender, message, args);
+    }
+
+    /**
+     * Display a success message to the command sender
+     * @param sender The command sender.
+     * @param message The message to send.
+     * @param args The message placeholders to replace.
+     */
+    public void success(CommandSender sender, String message, String... args) {
+        STEMCraftLib.success(sender, message, args);
+    }
+
+    /**
+     * The Bukkit onCommand method
+     */
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         execute(sender, label, Arrays.stream(args).toList());
@@ -37,8 +87,8 @@ public class STEMCraftCommand implements TabExecutor {
     }
 
     private static class TabCompleteValueOption {
-        String option = null;
-        String value = null;
+        String option;
+        String value;
 
         TabCompleteValueOption(String option, String value) {
             this.option = option;
@@ -47,7 +97,6 @@ public class STEMCraftCommand implements TabExecutor {
     }
 
     private static class TabCompleteArgParser {
-        TabCompletionManager tabCompletionManager;
         List<String> optionArgsAvailable = new ArrayList<>();
         Map<String, List<String>> valueOptionArgsAvailable = new HashMap<>();
         List<String> optionArgsUsed = new ArrayList<>();
@@ -55,8 +104,7 @@ public class STEMCraftCommand implements TabExecutor {
         Integer argIndex = 0;
         String[] args;
 
-        public TabCompleteArgParser(String[] args, TabCompletionManager manager) {
-            tabCompletionManager = manager;
+        public TabCompleteArgParser(String[] args) {
             this.args = args;
         }
 
@@ -92,7 +140,7 @@ public class STEMCraftCommand implements TabExecutor {
 
             if (value.startsWith("{") && value.endsWith("}")) {
                 String placeholder = value.substring(1, value.length() - 1);
-                List<String> placeholderList = tabCompletionManager.list(placeholder);
+                List<String> placeholderList = SCTabCompletion.list(placeholder);
                 list.addAll(placeholderList);
             } else {
                 list.add(value);
@@ -165,10 +213,10 @@ public class STEMCraftCommand implements TabExecutor {
         // iterate each tab completion list
         tabCompletionList.forEach(list -> {
             boolean matches = true;
-            int listIndex = 0;
+            int listIndex;
 
             // Copy the elements except the last one
-            TabCompleteArgParser argParser = new TabCompleteArgParser(fullArgs, lib.getTabCompletionManager());
+            TabCompleteArgParser argParser = new TabCompleteArgParser(fullArgs);
 
             // iterate each tab completion list item
             for (listIndex = 0; listIndex < list.length; listIndex++) {
