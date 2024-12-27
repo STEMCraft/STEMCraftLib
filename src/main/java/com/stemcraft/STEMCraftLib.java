@@ -31,6 +31,8 @@ public class STEMCraftLib extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
+        saveDefaultConfig();
+
         SCTabCompletion.register("player", () -> Bukkit.getServer().getOnlinePlayers().stream()
                 .map(Player::getName)
                 .toList()
