@@ -1,5 +1,6 @@
 package com.stemcraft.common;
 
+import com.stemcraft.STEMCraftLib;
 import com.stemcraft.TabCompletionManager;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,22 +9,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-@Getter
 public class STEMCraftCommand implements TabExecutor {
-    @Setter
-    private STEMCraftPlugin STEMCraftPlugin;
-    private final List<String> aliasList = new ArrayList<>();
+    private static STEMCraftLib lib;
+
     private final List<String[]> tabCompletionList = new ArrayList<>();
 
-    public void register(String commandName) {
-
+    public STEMCraftCommand(STEMCraftLib lib) {
+        STEMCraftCommand.lib = lib;
     }
 
-    public void alias(String alias) {
-        aliasList.add(alias);
-    }
-
-    public void tabComplete(String... args) {
+    public void addTabCompletion(String... args) {
         tabCompletionList.add(args);
     }
 
@@ -32,7 +27,7 @@ public class STEMCraftCommand implements TabExecutor {
     }
 
     public void message(CommandSender sender, String message, String... args) {
-        STEMCraftPlugin.message(sender, message, args);
+        lib.message(sender, message, args);
     }
 
     @Override
@@ -173,7 +168,7 @@ public class STEMCraftCommand implements TabExecutor {
             int listIndex = 0;
 
             // Copy the elements except the last one
-            TabCompleteArgParser argParser = new TabCompleteArgParser(fullArgs, STEMCraftPlugin.getSTEMCraftLib().getTabCompletionManager());
+            TabCompleteArgParser argParser = new TabCompleteArgParser(fullArgs, lib.getTabCompletionManager());
 
             // iterate each tab completion list item
             for (listIndex = 0; listIndex < list.length; listIndex++) {

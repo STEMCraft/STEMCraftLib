@@ -1,10 +1,15 @@
 package com.stemcraft;
 
+import com.stemcraft.common.STEMCraftCommand;
 import com.stemcraft.listener.PlayerDropItemListener;
 import lombok.Getter;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -26,6 +31,8 @@ public class STEMCraftLib extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+
+        new STEMCraftCommand(instance);
 
         if (Bukkit.getPluginManager().getPlugin("Geyser-Spigot") != null) {
             geyserInstalled = true;
@@ -231,5 +238,24 @@ public class STEMCraftLib extends JavaPlugin {
         }
         // Add more types if needed
         return null;
+    }
+
+    public void message(CommandSender sender, String message, String... args) {
+        if (args.length % 2 != 0) {
+            throw new IllegalArgumentException("Args must be in pairs of placeholder and value");
+        }
+
+        for (int i = 0; i < args.length; i += 2) {
+            String placeholder = "{" + args[i] + "}";
+            String value = args[i + 1];
+            message = message.replace(placeholder, value);
+        }
+
+        String miniMessageString = LegacyComponentSerializer.legacyAmpersand().serialize(
+                LegacyComponentSerializer.legacyAmpersand().deserialize(message)
+        );
+
+        Component component = MiniMessage.miniMessage().deserialize(miniMessageString);
+        sender.sendMessage(component);
     }
 }
