@@ -1,6 +1,6 @@
 prefix:
-  message: "&7 "    # Gray
-  info: "&b "       # Aqua
-  warning: "&e "    # Yellow
-  error: "&c "      # Red
-  success: "&a "    # Green
+  message: "&7"    # Gray
+  info: "&b"       # Aqua
+  warning: "&e"    # Yellow
+  error: "&c"      # Red
+  success: "&a"    # Green
