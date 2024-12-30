@@ -63,6 +63,6 @@ public class SCPlayer {
     public static void teleport(Player player, Location location) {
         Bukkit.getScheduler().runTaskLater(STEMCraftLib.getInstance(), () -> {
             player.teleport(location);
-        }, 1L); // 1 tick delay
+        }, 1L);
     }
 }
