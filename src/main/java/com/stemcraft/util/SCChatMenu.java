@@ -101,6 +101,6 @@ public class SCChatMenu {
     }
 
     public static int getPageFromArgs(List<String> args) {
-        return getPageFromArgs(args, 1, 1);
+        return getPageFromArgs(args, 0, 1);
     }
 }
