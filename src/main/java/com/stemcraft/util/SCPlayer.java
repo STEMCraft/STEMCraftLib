@@ -9,6 +9,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.geysermc.geyser.api.GeyserApi;
 
+import java.util.concurrent.CompletableFuture;
+
 public class SCPlayer {
     private static Boolean isGeyserInstalled = null;
     private static GeyserApi geyserApi = null;
@@ -60,9 +62,27 @@ public class SCPlayer {
      * @param player The player to teleport
      * @param location The location to teleport the player
      */
-    public static void teleport(Player player, Location location) {
+    public static CompletableFuture<Void> teleport(Player player, Location location) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
         Bukkit.getScheduler().runTaskLater(STEMCraftLib.getInstance(), () -> {
             player.teleport(location);
+            future.complete(null); // Mark the task as complete
+        }, 1L);
+        return future;
+    }
+
+    /**
+     * Safely teleport the player to a location
+     * @param player The player to teleport
+     * @param location The location to teleport the player
+     * @param callback Callback once the teleport is complete
+     */
+    public static void teleport(Player player, Location location, Runnable callback) {
+        Bukkit.getScheduler().runTaskLater(STEMCraftLib.getInstance(), () -> {
+            player.teleport(location);
+            if(callback != null) {
+                callback.run();
+            }
         }, 1L);
     }
 }
