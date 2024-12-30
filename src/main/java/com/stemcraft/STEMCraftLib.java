@@ -1,15 +1,14 @@
 package com.stemcraft;
 
 import com.stemcraft.listener.PlayerDropItemListener;
-import com.stemcraft.util.SCItem;
-import com.stemcraft.util.SCString;
-import com.stemcraft.util.SCTabCompletion;
+import com.stemcraft.util.*;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -58,19 +57,6 @@ public class STEMCraftLib extends JavaPlugin {
 
         saveDefaultConfig();
 
-        extractFile("prices.yml");
-        SCItem.loadPricesFromConfig(new File(instance.getDataFolder(), "prices.yml"));
-
-        SCTabCompletion.register("player", () -> Bukkit.getServer().getOnlinePlayers().stream()
-                .map(Player::getName)
-                .toList()
-        );
-
-        SCTabCompletion.register("world", () -> Bukkit.getServer().getWorlds().stream()
-                .map(World::getName)
-                .toList()
-        );
-
         File configFile = new File(instance.getDataFolder(), "config.yml");
         if (configFile.exists()) {
             YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
@@ -88,7 +74,38 @@ public class STEMCraftLib extends JavaPlugin {
             WIDTH_4 = loadWidthSet(config, "widths.4", WIDTH_4);
             WIDTH_5 = loadWidthSet(config, "widths.5", WIDTH_5);
             WIDTH_6 = loadWidthSet(config, "widths.6", WIDTH_6);
+
+            // Load worlds
+            ConfigurationSection worldsSection = config.getConfigurationSection("worlds");
+            if (worldsSection != null) {
+                for (String worldName : worldsSection.getKeys(false)) {
+                    if(SCWorld.exists(worldName)) {
+                        boolean load = worldsSection.getBoolean(worldName + ".load", false);
+                        if (load) {
+                            SCWorld.load(worldName);
+                            log("Loaded world {name}", "name", worldName);
+                        }
+                    } else {
+                        warning("Configuration contains the world {name} however it does not exist", "name", worldName);
+                    }
+                }
+            }
         }
+
+        extractFile("prices.yml");
+        SCItem.loadPricesFromConfig(new File(instance.getDataFolder(), "prices.yml"));
+
+        SCHologram.loadFromConfig(new File(instance.getDataFolder(), "holograms.yml"));
+
+        SCTabCompletion.register("player", () -> Bukkit.getServer().getOnlinePlayers().stream()
+                .map(Player::getName)
+                .toList()
+        );
+
+        SCTabCompletion.register("world", () -> Bukkit.getServer().getWorlds().stream()
+                .map(World::getName)
+                .toList()
+        );
 
         getServer().getPluginManager().registerEvents(new PlayerDropItemListener(), this);
 
