@@ -1,5 +1,5 @@
 prefix:
-  message: "&7"    # Gray
+  message: "&f"    # White
   info: "&b"       # Aqua
   warning: "&e"    # Yellow
   error: "&c"      # Red
