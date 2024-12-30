@@ -4,3 +4,10 @@ prefix:
   warning: "&e"    # Yellow
   error: "&c"      # Red
   success: "&a"    # Green
+widths:
+  2: "i!;:',.|"
+  3: "l`"
+  4: "t*()[]{}\"I "
+  5: "fk<>"
+  6: "abcdeghjmnopqrsuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789#$%^&-_=+/?\\"
+  7: "~@"

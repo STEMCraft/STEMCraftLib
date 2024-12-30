@@ -10,6 +10,7 @@ import org.bukkit.command.CommandSender;
 import java.util.List;
 import java.util.function.BiFunction;
 
+
 public class SCChatMenu {
     private final static int ITEMS_PER_PAGE = 8;
 
@@ -30,6 +31,7 @@ public class SCChatMenu {
 
         if(lines.isEmpty()) {
             STEMCraftLib.error(sender, noneText);
+            return;
         }
 
         sender.sendMessage(createSeparatorString(Component.text(title, NamedTextColor.AQUA)));
@@ -46,7 +48,7 @@ public class SCChatMenu {
                     .hoverEvent(HoverEvent.showText(Component.text("Previous page")));
         }
 
-        Component pageInfo = Component.text("page ", NamedTextColor.YELLOW)
+        Component pageInfo = Component.text("Page ", NamedTextColor.YELLOW)
                 .append(Component.text(page, NamedTextColor.GOLD)
                         .append(Component.text(" of " + maxPages, NamedTextColor.YELLOW)));
 
@@ -56,7 +58,7 @@ public class SCChatMenu {
                     .hoverEvent(HoverEvent.showText(Component.text("Next page")));
         }
 
-        sender.sendMessage(createSeparatorString(prev.append(Component.space()).append(pageInfo).append(Component.space()).append(next)));
+        sender.sendMessage(createSeparatorString(prev.append(pageInfo).append(next)));
     }
 
     /**
@@ -65,14 +67,23 @@ public class SCChatMenu {
      * @return The resulting component
      */
     private static Component createSeparatorString(Component title) {
+        // Separator character and max chat width
         String separator = "-";
+        int maxWidth = 320; // Pixels (default chat width in Minecraft)
 
-        int maxLength = 58;
-        int titleLength = title.toString().length();
-        int separatorLength = (maxLength - titleLength - 4) / 2;
 
-        String separatorStr = separator.repeat(separatorLength);
+        // Calculate title width in pixels
+        int titleWidth = SCString.calculatePixelWidth(title);
 
+        // Calculate separator width
+        int separatorWidth = SCString.calculatePixelWidth(separator);
+        int paddingWidth = (maxWidth - titleWidth - 8) / 2; // Account for 4 pixels padding on each side
+
+        // Calculate how many separators fit
+        int separatorCount = paddingWidth / separatorWidth;
+        String separatorStr = separator.repeat(separatorCount);
+
+        // Build and return the component
         return Component.text(separatorStr + " ", NamedTextColor.YELLOW)
                 .append(title)
                 .append(Component.text(" " + separatorStr, NamedTextColor.YELLOW));
