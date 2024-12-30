@@ -139,6 +139,22 @@ public class SCWorld {
     }
 
     /**
+     * Is a world currently loaded
+     *
+     * @param name The world name
+     * @return If the world is loaded
+     */
+    public static boolean isLoaded(String name) {
+        for(World world : Bukkit.getWorlds()) {
+            if(world.getName().equals(name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Load a world from disk
      *
      * @param name The world name
