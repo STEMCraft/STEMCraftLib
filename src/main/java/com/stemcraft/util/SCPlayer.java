@@ -1,6 +1,8 @@
 package com.stemcraft.util;
 
+import com.stemcraft.STEMCraftLib;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -51,5 +53,16 @@ public class SCPlayer {
         playerHead.setItemMeta(skullMeta);
 
         return playerHead;
+    }
+
+    /**
+     * Safely teleport the player to a location
+     * @param player The player to teleport
+     * @param location The location to teleport the player
+     */
+    public static void teleport(Player player, Location location) {
+        Bukkit.getScheduler().runTaskLater(STEMCraftLib.getInstance(), () -> {
+            player.teleport(location);
+        }, 1L); // 1 tick delay
     }
 }
