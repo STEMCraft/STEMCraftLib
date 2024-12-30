@@ -11,60 +11,25 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 public class SCChatMenu {
-    private CommandSender sender;
-    private int page;
-    private int count;
-    private String command;
-    private String title;
-    private String none = "No items where found";
     private final static int ITEMS_PER_PAGE = 8;
 
-    public SCChatMenu(CommandSender sender, int page) {
-        this.sender = sender;
-        this.page = page;
-    }
-
-    public SCChatMenu(CommandSender sender, String page) {
-        try {
-            this.page = Integer.parseInt(page);
-        } catch(Exception e) {
-            this.page = 0;
-        }
-    }
-
-    public SCChatMenu count(int count) {
-        this.count = count;
-        return this;
-    }
-
-    public SCChatMenu command(String command) {
-        this.command = command;
-        return this;
-    }
-
-    public SCChatMenu title(String title) {
-        this.title = title;
-        return this;
-    }
-
     /**
-     * Update the "No items found" string to be displayed
-     * @param none The string to use
-     * @return SCChatMenu
+     * Render a Chat Menu for the player
+     * @param sender The sender requesting the menu
+     * @param title The menu title
+     * @param command The command to show the menu. Page numbers will be appended
+     * @param page The current page
+     * @param count The number of items in the menu
+     * @param func The callback function to display each item in the menu
+     * @param noneText The string to display when no items are found
      */
-    public SCChatMenu none(String none) {
-        this.none = none;
-        return this;
-    }
-
-    public SCChatMenu showItems(BiFunction<Integer, Integer, List<Component>> func) {
+    public static void render(CommandSender sender, String title, String command, int page, int count, BiFunction<Integer, Integer, List<Component>> func, String noneText) {
         int start = (page - 1) * ITEMS_PER_PAGE;
         int maxPages = (int)Math.ceil((double) count / ITEMS_PER_PAGE);
         List<Component> lines = func.apply(start, ITEMS_PER_PAGE);
 
         if(lines.isEmpty()) {
-            STEMCraftLib.error(sender, none);
-            return this;
+            STEMCraftLib.error(sender, noneText);
         }
 
         sender.sendMessage(createSeparatorString(Component.text(title, NamedTextColor.AQUA)));
@@ -83,16 +48,15 @@ public class SCChatMenu {
 
         Component pageInfo = Component.text("page ", NamedTextColor.YELLOW)
                 .append(Component.text(page, NamedTextColor.GOLD)
-                .append(Component.text(" of " + maxPages, NamedTextColor.YELLOW)));
+                        .append(Component.text(" of " + maxPages, NamedTextColor.YELLOW)));
 
         Component next = Component.text(" >>>", (page >= maxPages ? NamedTextColor.GRAY : NamedTextColor.GOLD));
         if(page < maxPages) {
             next = next.clickEvent(ClickEvent.runCommand(command + " " + (page + 1)))
-                .hoverEvent(HoverEvent.showText(Component.text("Next page")));
+                    .hoverEvent(HoverEvent.showText(Component.text("Next page")));
         }
 
         sender.sendMessage(createSeparatorString(prev.append(Component.space()).append(pageInfo).append(Component.space()).append(next)));
-        return this;
     }
 
     /**
@@ -114,4 +78,29 @@ public class SCChatMenu {
                 .append(Component.text(" " + separatorStr, NamedTextColor.YELLOW));
     }
 
+    /**
+     * Get the page number requested from command args
+     * @param args The command args
+     * @param index Which command arg contains the page number
+     * @param defaultPage The default page number to use if no page number is in args
+     * @return The page number
+     */
+    public static int getPageFromArgs(List<String> args, int index, int defaultPage) {
+        if (args != null && !args.isEmpty()) {
+            try {
+                int p = Integer.parseInt(args.get(index));
+                if(p >= 1) {
+                    return p;
+                }
+            } catch (NumberFormatException e) {
+                // empty
+            }
+        }
+
+        return defaultPage;
+    }
+
+    public static int getPageFromArgs(List<String> args) {
+        return getPageFromArgs(args, 1, 1);
+    }
 }
