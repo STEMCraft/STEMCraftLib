@@ -16,6 +16,17 @@ public class SCTabCompletion {
         completions.put(name.toLowerCase(), method);
     }
 
+    
+    /**
+     * Registers a new completions method.
+     *
+     * @param name   The name of the variable (without braces).
+     * @param args   The list of strings to display.
+     */
+    public static void register(String name, List<String> args) {
+        register(name, () -> args);
+    }
+
     /**
      * Registers a new completions method.
      *
