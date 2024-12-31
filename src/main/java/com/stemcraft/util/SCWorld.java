@@ -220,11 +220,11 @@ public class SCWorld {
     }
 
     /**
-     * Remove a world from the server
+     * Delete a world from the server
      * @param world The world to remove
      * @param sender Send messages to sender. Use null for quiet
      */
-    public void remove(World world, CommandSender sender, Runnable callback) {
+    public static void delete(World world, CommandSender sender, Runnable callback) {
         if(world != null) {
             if(Bukkit.getWorlds().getFirst() != world) {
                 String name = world.getName();
@@ -245,7 +245,7 @@ public class SCWorld {
         }
     }
 
-    private void deleteFolder(File folder) {
+    private static void deleteFolder(File folder) {
         if (folder.isDirectory()) {
             File[] files = folder.listFiles();
             if (files != null) { // Check if the folder is not empty
