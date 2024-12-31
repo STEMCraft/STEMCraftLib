@@ -95,6 +95,7 @@ public class STEMCraftLib extends JavaPlugin {
         extractFile("prices.yml");
         SCItem.loadPricesFromConfig(new File(instance.getDataFolder(), "prices.yml"));
 
+        SCPlayer.init();
         SCHologram.load();
 
         SCTabCompletion.register("player", () -> Bukkit.getServer().getOnlinePlayers().stream()

@@ -4,16 +4,49 @@ import com.stemcraft.STEMCraftLib;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.geysermc.geyser.api.GeyserApi;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 public class SCPlayer {
     private static Boolean isGeyserInstalled = null;
     private static GeyserApi geyserApi = null;
+    private static Map<String, String> nameCache = new HashMap<>();
+    private static File configFile;
+    private static YamlConfiguration config;
+
+    public static void init() {
+        configFile = new File(STEMCraftLib.getInstance().getDataFolder(), "players.yml");
+        if (!configFile.exists()) {
+            try {
+                configFile.createNewFile();
+            } catch (IOException e) {
+                STEMCraftLib.log(Level.SEVERE, "Could not create the players.yml configuration file", e);
+            }
+        }
+
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
+
+        ConfigurationSection cacheSection = config.getConfigurationSection("players.cache");
+        if (cacheSection != null) {
+            for (String key : cacheSection.getKeys(false)) {
+                nameCache.put(key, cacheSection.getString(key));
+            }
+        }
+    }
 
     /**
      * Test if a player is a BedRock player
@@ -84,5 +117,48 @@ public class SCPlayer {
                 callback.run();
             }
         }, 1L);
+    }
+
+    public static void updateCacheName(String id, String name) {
+        nameCache.put(id, name);
+        config.set("players.cache." + id, name);
+
+        try {
+            config.save(configFile);
+        } catch (IOException e) {
+            STEMCraftLib.log(Level.SEVERE, "Failed to save the players configuration file", e);
+        }
+    }
+
+    public static String name(String id) {
+        // 1. Check the cache
+        if (nameCache.containsKey(id)) {
+            return nameCache.get(id);
+        }
+
+        // 2. Check online players
+        Player player = Bukkit.getPlayer(UUID.fromString(id));
+        if (player != null) {
+            String name = player.getName();
+            updateCacheName(id, name); // Cache the name
+            return name;
+        }
+
+        // 3. Check offline players asynchronously
+        CompletableFuture<String> futureName = CompletableFuture.supplyAsync(() -> {
+            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(UUID.fromString(id));
+            return offlinePlayer.getName();
+        });
+
+        try {
+            String name = futureName.get(5, TimeUnit.SECONDS); // Wait up to 5 seconds
+            if (name != null) {
+                updateCacheName(id, name); // Cache the name
+            }
+            return name;
+        } catch (Exception e) {
+            STEMCraftLib.log(Level.SEVERE, "Lookup player name for UUID " + id + " failed", e);
+            return null; // Return null if lookup fails
+        }
     }
 }
