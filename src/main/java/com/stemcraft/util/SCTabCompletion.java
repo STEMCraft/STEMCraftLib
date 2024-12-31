@@ -15,7 +15,6 @@ public class SCTabCompletion {
     public static void register(String name, Supplier<List<String>> method) {
         completions.put(name.toLowerCase(), method);
     }
-
     
     /**
      * Registers a new completions method.
