@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class SCWorld {
-    private static List<World> unloadingList = new ArrayList<>();
+    private static List<String> unloadingList = new ArrayList<>();
 
     /**
      * Are worlds part of the same realm?
@@ -163,10 +163,23 @@ public class SCWorld {
      */
     public static World load(String name) {
         if(exists(name)) {
-            WorldCreator creator = new WorldCreator(name);
-            return Bukkit.createWorld(creator);
+            World world = Bukkit.getWorld(name);
+            if(world != null) {
+                STEMCraftLib.log("world {name} found in bukkit list", "name", name);
+                return world;
+            }
+
+            if(!isUnloading(name)) {
+                STEMCraftLib.log("using worldcreator for world {name}", "name", name);
+                WorldCreator creator = new WorldCreator(name);
+                return Bukkit.createWorld(creator);
+            } else {
+                STEMCraftLib.log("could not load world {name} as its unloading", "name", name);
+                return null;
+            }
         }
 
+        STEMCraftLib.log("could not load world {name}", "name", name);
         return null;
     }
 
@@ -193,11 +206,11 @@ public class SCWorld {
 
     /**
      * Returns if the server is unloading the world
-     * @param world The world to check
+     * @param worldName The world to check
      * @return If the server is unloading the world
      */
-    public static boolean isUnloading(World world) {
-        return unloadingList.contains(world);
+    public static boolean isUnloading(String worldName) {
+        return unloadingList.contains(worldName);
     }
 
     /**
@@ -214,6 +227,11 @@ public class SCWorld {
                 if(!Bukkit.getWorlds().contains(world)) {
                     this.cancel();
 
+                    Bukkit.getScheduler().runTaskLater(STEMCraftLib.getInstance(), () -> {
+                        STEMCraftLib.log("Unloaded world {name}", "name", world.getName());
+                        unloadingList.remove(world.getName());
+                    }, 20L);
+
                     if(callback != null) {
                         callback.run();
                     }
@@ -221,10 +239,12 @@ public class SCWorld {
             }
         };
 
-        if(world != null && !unloadingList.contains(world)) {
+        if(world != null && !unloadingList.contains(world.getName())) {
             if(Bukkit.getWorlds().getFirst() != world) {
-                unloadingList.add(world);
                 String name = world.getName();
+                unloadingList.add(name);
+
+                STEMCraftLib.log("Unloading world {name}", "name", name);
 
                 CompletableFuture<Void> teleportTasks = CompletableFuture.allOf(
                     world.getPlayers().stream().map(player -> {
@@ -255,14 +275,23 @@ public class SCWorld {
                 String name = world.getName();
 
                 unload(world, false, () -> {
-                    File worldFolder = getWorldFolder(name);
-                    if(worldFolder.exists()) {
-                        deleteFolder(worldFolder);
-                    }
+                    Bukkit.getScheduler().runTaskLater(STEMCraftLib.getInstance(), () -> {
+                        STEMCraftLib.log("Deleting world {name} data...", "name", name);
+                        File worldFolder = getWorldFolder(name);
+                        if (worldFolder.exists()) {
+                            deleteFolder(worldFolder);
+                        }
 
-                    if(sender != null) {
-                        STEMCraftLib.info(sender, "The world '{name}' has been removed", "name", name);
-                    }
+                        STEMCraftLib.log("Deleted world {name}", "name", name);
+
+                        if (sender != null) {
+                            STEMCraftLib.info(sender, "The world '{name}' has been removed", "name", name);
+                        }
+
+                        if (callback != null) {
+                            callback.run();
+                        }
+                    }, 20L);
                 });
             } else if(sender != null){
                 STEMCraftLib.error(sender, "You cannot remove the main world");

@@ -12,7 +12,7 @@ public class PlayerTeleportListener implements Listener {
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         World targetWorld = event.getTo().getWorld();
 
-        if (SCWorld.isUnloading(targetWorld)) {
+        if (SCWorld.isUnloading(targetWorld.getName())) {
             event.setCancelled(true); // Cancel teleport
             STEMCraftLib.error(event.getPlayer(), "You cannot teleport to this world right now as it is unloading.");
         }
