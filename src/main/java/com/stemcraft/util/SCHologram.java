@@ -99,10 +99,12 @@ public class SCHologram {
                     entity.remove();
                 }
 
-                // update the stands (create is required)
+                // update the stands (create if required)
+                double y = location.getY() + (LINE_SPACING * (text.size() + 1));
+                Location standLoc = location;
                 for (int i = 0; i < text.size(); i++) {
-                    Location standLoc = location.add(0, i * LINE_SPACING, 0);
                     UUID standId;
+                    standLoc = standLoc.subtract(0, LINE_SPACING, 0);
 
                     if(stands.size() <= i + 1) {
                         // create new stand
