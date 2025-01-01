@@ -1,6 +1,7 @@
 package com.stemcraft.util;
 
 import com.stemcraft.STEMCraftLib;
+import com.stemcraft.event.WorldDeleteEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
@@ -283,6 +284,8 @@ public class SCWorld {
                         }
 
                         STEMCraftLib.log("Deleted world {name}", "name", name);
+                        Bukkit.getPluginManager().callEvent(new WorldDeleteEvent(name));
+
 
                         if (sender != null) {
                             STEMCraftLib.info(sender, "The world '{name}' has been removed", "name", name);
