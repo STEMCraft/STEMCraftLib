@@ -245,6 +245,15 @@ public class SCWorld {
         }
     }
 
+    /**
+     * Delete a world from the server
+     * @param world The world to remove
+     */
+    public static void delete(World world) {
+        delete(world, null, null);
+    }
+
+
     private static void deleteFolder(File folder) {
         if (folder.isDirectory()) {
             File[] files = folder.listFiles();
