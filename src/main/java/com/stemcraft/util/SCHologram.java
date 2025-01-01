@@ -34,19 +34,24 @@ public class SCHologram {
     static class HologramData {
         private final UUID id;
         private final String type;
-        private List<ArmorStand> stands;
+        private final List<ArmorStand> stands;
         private final List<UUID> standIds;
         private List<String> text;
         private final Location location;
         private boolean dirty;
 
         public HologramData(UUID id, String type, Location location, List<UUID> stand, List<String> text) {
+            this.stands = new ArrayList<>();
             this.id = id;
             this.type = (type == null || type.isEmpty()) ? null : type;
             this.location = location;
-            this.standIds = stand;
-            this.text = text;
+            this.standIds = (stand == null) ? new ArrayList<>() : stand;
+            this.text = (text == null) ? new ArrayList<>() : text;
             this.dirty = false;
+
+            if(this.type != null && this.text.isEmpty() && types.containsKey(this.type)) {
+                this.text = types.get(this.type).get();
+            }
         }
 
         /**
@@ -167,23 +172,29 @@ public class SCHologram {
         holograms.clear();
 
         configFile = new File(STEMCraftLib.getInstance().getDataFolder(), "holograms.yml");
-        if(configFile.exists()) {
-            config = YamlConfiguration.loadConfiguration(configFile);
+        if (!configFile.exists()) {
+            try {
+                configFile.createNewFile();
+            } catch (IOException e) {
+                STEMCraftLib.log(Level.SEVERE, "Could not create the holograms.yml configuration file", e);
+            }
+        }
 
-            if (config.contains("holograms")) {
-                for (String id : Objects.requireNonNull(config.getConfigurationSection("holograms")).getKeys(false)) {
-                    String type = config.getString("holograms." + id + ".type");
-                    Location location = SCString.stringToLocation(config.getString("holograms." + id + ".location"));
-                    List<UUID> stands = config.getStringList("holograms." + id + ".stands")
-                            .stream()
-                            .map(UUID::fromString)
-                            .toList();
-                    List<String> text = config.getStringList("holograms." + id + ".text");
+        config = YamlConfiguration.loadConfiguration(configFile);
 
-                    UUID uuid = UUID.fromString(id);
-                    HologramData hologram = new HologramData(uuid, type, location, stands, text);
-                    holograms.put(uuid, hologram);
-                }
+        if (config.contains("holograms")) {
+            for (String id : Objects.requireNonNull(config.getConfigurationSection("holograms")).getKeys(false)) {
+                String type = config.getString("holograms." + id + ".type");
+                Location location = SCString.stringToLocation(config.getString("holograms." + id + ".location"));
+                List<UUID> stands = config.getStringList("holograms." + id + ".stands")
+                        .stream()
+                        .map(UUID::fromString)
+                        .toList();
+                List<String> text = config.getStringList("holograms." + id + ".text");
+
+                UUID uuid = UUID.fromString(id);
+                HologramData hologram = new HologramData(uuid, type, location, stands, text);
+                holograms.put(uuid, hologram);
             }
         }
     }
