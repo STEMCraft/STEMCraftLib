@@ -16,6 +16,8 @@ public class PlayerJoinListener implements Listener {
         Player player = event.getPlayer();
         Location spawn = Objects.requireNonNull(Bukkit.getServer().getWorld("world")).getSpawnLocation();
 
+        SCPlayer.updateCacheName(String.valueOf(player.getUniqueId()), player.getName());
+
         SCPlayer.teleport(player, spawn);
     }
 }
