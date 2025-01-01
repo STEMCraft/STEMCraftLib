@@ -64,7 +64,9 @@ public class SCHologram {
             if(dirty || force) {
                 config.set("holograms." + id + ".type", type);
                 config.set("holograms." + id + ".location", SCString.locationToString(location, true, false));
-                config.set("holograms." + id + ".stands", standIds);
+                config.set("holograms." + id + ".stands", standIds.stream()
+                        .map(UUID::toString)
+                        .collect(Collectors.toList()));
                 config.set("holograms." + id + ".text", text);
 
                 dirty = false;
@@ -338,6 +340,14 @@ public class SCHologram {
         return holograms.values().stream()
                 .filter(hologramData -> {
                     Location targetLocation = hologramData.getLocation();
+
+                    STEMCraftLib.message(
+                            "{id} {worlda}={worldb} distance={d}",
+                            "id", String.valueOf(hologramData.getId()),
+                            "worlda", targetLocation.getWorld().getName(),
+                            "worldb", hologramData.getLocation().getWorld().getName(),
+                            "d", String.valueOf(targetLocation.distanceSquared(location))
+                    );
                     // Check if worlds match, distance is within range, and type matches
                     return targetLocation.getWorld().equals(location.getWorld()) &&
                             targetLocation.distanceSquared(location) <= rangeSquared &&
