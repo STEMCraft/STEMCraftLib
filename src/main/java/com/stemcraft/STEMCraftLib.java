@@ -1,6 +1,8 @@
 package com.stemcraft;
 
+import com.stemcraft.listener.ChunkLoadListener;
 import com.stemcraft.listener.PlayerDropItemListener;
+import com.stemcraft.listener.PlayerJoinListener;
 import com.stemcraft.util.*;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
@@ -109,6 +111,8 @@ public class STEMCraftLib extends JavaPlugin {
         );
 
         getServer().getPluginManager().registerEvents(new PlayerDropItemListener(), this);
+        getServer().getPluginManager().registerEvents(new ChunkLoadListener(), this);
+        getServer().getPluginManager().registerEvents(new PlayerJoinListener(), this);
 
         getLogger().log(Level.INFO, "STEMCraftLib Loaded");
     }
