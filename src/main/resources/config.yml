@@ -1,3 +1,4 @@
+debug: true
 prefix:
   message: "&f"    # White
   info: "&b"       # Aqua

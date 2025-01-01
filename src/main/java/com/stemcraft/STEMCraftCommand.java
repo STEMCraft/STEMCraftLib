@@ -99,7 +99,9 @@ public class STEMCraftCommand implements TabExecutor {
     private static class TabCompleteArgParser {
         List<String> optionArgsAvailable = new ArrayList<>();
         Map<String, List<String>> valueOptionArgsAvailable = new HashMap<>();
+        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // future usage
         List<String> optionArgsUsed = new ArrayList<>();
+        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // future usage
         List<String> valueOptionArgsUsed = new ArrayList<>();
         Integer argIndex = 0;
         String[] args;
@@ -284,5 +286,13 @@ public class STEMCraftCommand implements TabExecutor {
         }
 
         return tabCompletionResults;
+    }
+
+    /**
+     * Write a debug message to the console and operator players.
+     * @param message The debug message
+     */
+    public void debug(String message) {
+        STEMCraftLib.debug(message);
     }
 }

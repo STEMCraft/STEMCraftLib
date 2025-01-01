@@ -18,6 +18,7 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.ServerOperator;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -34,6 +35,8 @@ import java.util.logging.Level;
 public class STEMCraftLib extends JavaPlugin {
     @Getter
     private static STEMCraftLib instance;
+
+    private static boolean showDebug = false;
 
     private static String messagePrefix = "";
     private static String infoPrefix = "";
@@ -67,6 +70,8 @@ public class STEMCraftLib extends JavaPlugin {
         File configFile = new File(instance.getDataFolder(), "config.yml");
         if (configFile.exists()) {
             YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
+
+            showDebug = config.getBoolean("debug", false);
 
             // Load prefixes
             messagePrefix = config.getString("prefix.message", "");
@@ -151,6 +156,19 @@ public class STEMCraftLib extends JavaPlugin {
         }
 
         return false;
+    }
+
+    /**
+     * Write a debug message to the console and operator players.
+     * @param message The debug message
+     */
+    public static void debug(String message) {
+        if(showDebug) {
+            log(Level.INFO, message);
+            Bukkit.getOnlinePlayers().stream()
+                    .filter(ServerOperator::isOp) // Filter ops
+                    .forEach(player -> player.sendMessage("[DEBUG] " + message)); // Send message
+        }
     }
 
     /**
@@ -460,6 +478,7 @@ public class STEMCraftLib extends JavaPlugin {
         // Ensure the plugin's data folder exists
         File dataFolder = instance.getDataFolder();
         if (!dataFolder.exists()) {
+            //noinspection ResultOfMethodCallIgnored
             dataFolder.mkdirs(); // Create data folder if it doesn't exist
         }
 
@@ -470,6 +489,7 @@ public class STEMCraftLib extends JavaPlugin {
         // Create parent directories for target file
         File parentDir = targetFile.getParentFile();
         if (!parentDir.exists()) {
+            //noinspection ResultOfMethodCallIgnored
             parentDir.mkdirs(); // Create subdirectories if needed
         }
 

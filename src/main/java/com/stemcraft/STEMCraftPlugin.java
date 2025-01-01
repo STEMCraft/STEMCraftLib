@@ -1,18 +1,9 @@
 package com.stemcraft;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Server;
-import org.bukkit.command.CommandMap;
-import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Listener;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -20,6 +11,7 @@ import java.util.logging.Level;
  * STEMCraft Plugin Base
  */
 public class STEMCraftPlugin extends JavaPlugin {
+    @SuppressWarnings("FieldCanBeLocal")
     private static STEMCraftPlugin instance;
     private static STEMCraftLib lib;
 
@@ -97,5 +89,13 @@ public class STEMCraftPlugin extends JavaPlugin {
 
     public void registerCommand(STEMCraftCommand executor) {
         lib.registerCommand(executor);
+    }
+
+    /**
+     * Write a debug message to the console and operator players.
+     * @param message The debug message
+     */
+    public void debug(String message) {
+        STEMCraftLib.debug(message);
     }
 }
