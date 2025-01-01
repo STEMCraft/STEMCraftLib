@@ -84,84 +84,18 @@ public class STEMCraftPlugin extends JavaPlugin {
      * @param tabCompletions The tab completions for the command
      */
     public void registerCommand(STEMCraftCommand executor, String command, List<String> aliases, List<String[]> tabCompletions) {
-        CommandMap commandMap = getCommandMap();
-        PluginCommand pluginCommand = null;
-
-        if(commandMap == null) {
-            log(Level.SEVERE, "Could not get the server command map");
-            return;
-        }
-
-        try {
-            Constructor<PluginCommand> c = PluginCommand.class.getDeclaredConstructor(String.class, Plugin.class);
-            c.setAccessible(true);
-
-            pluginCommand = c.newInstance(command, this);
-        } catch (Exception e) {
-            log(Level.SEVERE, "An error occurred registering the command '" + command + "'", e);
-        }
-
-        if(pluginCommand != null) {
-            if (aliases != null && !aliases.isEmpty()) {
-                pluginCommand.setAliases(aliases);
-            }
-
-            if(tabCompletions != null && !tabCompletions.isEmpty()) {
-                tabCompletions.forEach(executor::addTabCompletion);
-                pluginCommand.setTabCompleter(executor);
-            }
-
-            pluginCommand.setExecutor(executor);
-            commandMap.register(command, "stemcraft", pluginCommand);
-        } else {
-            log(Level.SEVERE, "Could not create a new instance of the command '" + command + "'");
-        }
+        lib.registerCommand(executor, command, aliases, tabCompletions);
     }
 
     public void registerCommand(STEMCraftCommand executor, String command, String aliases, String tabCompletions) {
-        List<String> aliasList;
-        List<String[]> tabCompletionsList;
-
-        if(aliases != null) {
-            aliasList = Arrays.asList(aliases.split(" "));
-        } else {
-            aliasList = new ArrayList<>();
-        }
-
-        if(tabCompletions != null) {
-            tabCompletionsList = Collections.singletonList(tabCompletions.split(" "));
-        } else {
-            tabCompletionsList = new ArrayList<>();
-        }
-
-        registerCommand(executor, command, aliasList, tabCompletionsList);
+        lib.registerCommand(executor, command, aliases, tabCompletions);
     }
 
     public void registerCommand(STEMCraftCommand executor, String command) {
-        registerCommand(executor, command, (List<String>)null, null);
+        lib.registerCommand(executor, command);
     }
 
     public void registerCommand(STEMCraftCommand executor) {
-        String command = executor.getClass().getSimpleName().toLowerCase();
-        registerCommand(executor, command, (List<String>) null, null);
-    }
-
-    /**
-     * Return the command map structure for the server
-     *
-     * @return The command map for the server
-     */
-    private static CommandMap getCommandMap() {
-        try {
-            Server server = instance.getServer();
-            final Field bukkitCommandMap = server.getClass().getDeclaredField("commandMap");
-
-            bukkitCommandMap.setAccessible(true);
-            return (CommandMap) bukkitCommandMap.get(server);
-        } catch (Exception e) {
-            instance.getLogger().log(Level.SEVERE, "An error occurred getting the command map of the server", e);
-        }
-
-        return null;
+        lib.registerCommand(executor);
     }
 }

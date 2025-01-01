@@ -6,15 +6,16 @@ import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.command.CommandSender;
 import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.checkerframework.checker.units.qual.A;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class SCWorld {
+    private static List<World> unloadingList = new ArrayList<>();
+
     /**
      * Are worlds part of the same realm?
      *
@@ -191,6 +192,15 @@ public class SCWorld {
     }
 
     /**
+     * Returns if the server is unloading the world
+     * @param world The world to check
+     * @return If the server is unloading the world
+     */
+    public static boolean isUnloading(World world) {
+        return unloadingList.contains(world);
+    }
+
+    /**
      * Safely unload a world, teleporting the players back to the default world
      *
      * @param world The world to unload
@@ -198,23 +208,38 @@ public class SCWorld {
      * @param callback Callback once the world is unloaded
      */
     public static void unload(World world, Boolean save, Runnable callback) {
-        if(world != null) {
+        BukkitRunnable task = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if(!Bukkit.getWorlds().contains(world)) {
+                    this.cancel();
+
+                    if(callback != null) {
+                        callback.run();
+                    }
+                }
+            }
+        };
+
+        if(world != null && !unloadingList.contains(world)) {
             if(Bukkit.getWorlds().getFirst() != world) {
+                unloadingList.add(world);
                 String name = world.getName();
 
                 CompletableFuture<Void> teleportTasks = CompletableFuture.allOf(
-                        world.getPlayers().stream().map(player -> {
-                            STEMCraftLib.warning(player, "World '{name}' is being unloaded, teleporting to main world", "name", name);
-                            return SCPlayer.teleport(player, Bukkit.getWorlds().getFirst().getSpawnLocation());
-                        }).toArray(CompletableFuture[]::new)
+                    world.getPlayers().stream().map(player -> {
+                        STEMCraftLib.warning(player, "World '{name}' is being unloaded, teleporting to main world", "name", name);
+                        return SCPlayer.teleport(player, Bukkit.getWorlds().getFirst().getSpawnLocation());
+                    }).toArray(CompletableFuture[]::new)
                 );
 
                 teleportTasks.thenRun(() -> Bukkit.getScheduler().runTaskLater(STEMCraftLib.getInstance(), () -> {
                     Bukkit.unloadWorld(world, save);
-                    if(callback != null) {
-                        callback.run();
-                    }
-                }, 1L));
+
+                    task.runTaskTimer(STEMCraftLib.getInstance(), 10L, 10L);
+                }, 20L));
+            } else {
+                task.runTaskTimer(STEMCraftLib.getInstance(), 10L, 10L);
             }
         }
     }
