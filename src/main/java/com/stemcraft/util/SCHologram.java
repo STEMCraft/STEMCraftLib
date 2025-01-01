@@ -39,6 +39,7 @@ public class SCHologram {
         private List<String> text;
         private final Location location;
         private boolean dirty;
+        private boolean deleting = false;
 
         public HologramData(UUID id, String type, Location location, List<UUID> stand, List<String> text) {
             this.stands = new ArrayList<>();
@@ -61,6 +62,22 @@ public class SCHologram {
          * @return If data was saved to the configuration file
          */
         public boolean save(boolean force) {
+            if(deleting) {
+                stands.forEach(entity -> {
+                    if(entity != null && entity.isValid()) {
+                        entity.remove();
+                    }
+                });
+
+                stands.clear();
+                config.set("holograms." + id, null);
+
+                holograms.remove(id);
+
+                this.dirty = true;
+                return true;
+            }
+
             if(dirty || force) {
                 config.set("holograms." + id + ".type", type);
                 config.set("holograms." + id + ".location", SCString.locationToString(location, true, false));
@@ -93,11 +110,8 @@ public class SCHologram {
             if(location.getChunk().isLoaded()) {
 
                 // check armor stands are valid
-                stands.forEach(entity -> {
-                    if(entity == null || !entity.isValid()) {
-                        stands.remove(entity);
-                    }
-                });
+                // Safe removal via iterator
+                stands.removeIf(entity -> entity == null || !entity.isValid());
 
                 // check if too many stands
                 while(stands.size() > text.size()) {
@@ -111,6 +125,13 @@ public class SCHologram {
                 Location standLoc = location;
                 for (int i = 0; i < text.size(); i++) {
                     UUID standId;
+                    String str = text.get(i);
+
+                    if(str.isEmpty()) {
+                        standLoc = standLoc.subtract(0, (LINE_SPACING / 2), 0);
+                        continue;
+                    }
+
                     standLoc = standLoc.subtract(0, LINE_SPACING, 0);
 
                     if(stands.size() <= i + 1) {
@@ -118,14 +139,15 @@ public class SCHologram {
                         ArmorStand entity = (ArmorStand) location.getWorld().spawnEntity(standLoc, EntityType.ARMOR_STAND);
                         entity.setVisible(false);
                         entity.setCustomNameVisible(true);
-                        entity.customName(LegacyComponentSerializer.legacyAmpersand().deserialize(text.get(i)));
+                        entity.customName(LegacyComponentSerializer.legacyAmpersand().deserialize(str));
                         entity.setGravity(false);
 
                         standId = entity.getUniqueId();
+                        stands.add(entity);
                     } else {
                         ArmorStand entity = stands.get(i);
                         entity.teleport(standLoc);
-                        entity.customName(LegacyComponentSerializer.legacyAmpersand().deserialize(text.get(i)));
+                        entity.customName(LegacyComponentSerializer.legacyAmpersand().deserialize(str));
 
                         standId = entity.getUniqueId();
                     }
@@ -156,13 +178,9 @@ public class SCHologram {
          * Delete the hologram and its data
          */
         public void delete() {
-            stands.forEach(entity -> {
-                if(entity != null && entity.isValid()) {
-                    entity.remove();
-                }
-            });
+            this.deleting = true;
 
-            config.set("holograms." + id, null);
+            save();
             SCHologram.saveAll();
         }
     }
@@ -190,8 +208,7 @@ public class SCHologram {
                 Location location = SCString.stringToLocation(config.getString("holograms." + id + ".location"));
                 List<UUID> stands = config.getStringList("holograms." + id + ".stands")
                         .stream()
-                        .map(UUID::fromString)
-                        .toList();
+                        .map(UUID::fromString).collect(Collectors.toList());
                 List<String> text = config.getStringList("holograms." + id + ".text");
 
                 UUID uuid = UUID.fromString(id);
@@ -295,7 +312,7 @@ public class SCHologram {
                 }
             };
 
-            saveTask.runTaskLater(STEMCraftLib.getInstance(), 100);
+            saveTask.runTaskLater(STEMCraftLib.getInstance(), 10);
             return;
         }
 
@@ -341,13 +358,6 @@ public class SCHologram {
                 .filter(hologramData -> {
                     Location targetLocation = hologramData.getLocation();
 
-                    STEMCraftLib.message(
-                            "{id} {worlda}={worldb} distance={d}",
-                            "id", String.valueOf(hologramData.getId()),
-                            "worlda", targetLocation.getWorld().getName(),
-                            "worldb", hologramData.getLocation().getWorld().getName(),
-                            "d", String.valueOf(targetLocation.distanceSquared(location))
-                    );
                     // Check if worlds match, distance is within range, and type matches
                     return targetLocation.getWorld().equals(location.getWorld()) &&
                             targetLocation.distanceSquared(location) <= rangeSquared &&
