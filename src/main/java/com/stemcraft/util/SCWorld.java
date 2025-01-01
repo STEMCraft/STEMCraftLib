@@ -253,6 +253,26 @@ public class SCWorld {
         delete(world, null, null);
     }
 
+    /**
+     * Delete a world from the server
+     * @param worldName The world name to remove
+     */
+    public static void delete(String worldName) {
+        if(worldName != null) {
+            if(!Bukkit.getWorlds().getFirst().getName().equalsIgnoreCase(worldName)) {
+                World world = Bukkit.getWorld(worldName);
+                if(world != null) {
+                    delete(world);
+                } else {
+                    File worldFolder = getWorldFolder(worldName);
+                    if(worldFolder.exists()) {
+                        deleteFolder(worldFolder);
+                    }
+                }
+            }
+        }
+    }
+
 
     private static void deleteFolder(File folder) {
         if (folder.isDirectory()) {
