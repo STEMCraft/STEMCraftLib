@@ -38,7 +38,7 @@ public class SCPlayer {
             }
         }
 
-        YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
+        config = YamlConfiguration.loadConfiguration(configFile);
 
         ConfigurationSection cacheSection = config.getConfigurationSection("players.cache");
         if (cacheSection != null) {
