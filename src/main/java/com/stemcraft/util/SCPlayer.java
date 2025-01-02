@@ -130,6 +130,10 @@ public class SCPlayer {
         }
     }
 
+    public static String name(UUID id) {
+        return name(String.valueOf(id));
+    }
+
     public static String name(String id) {
         // 1. Check the cache
         if (nameCache.containsKey(id)) {
