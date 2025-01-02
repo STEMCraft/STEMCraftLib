@@ -1,20 +1,21 @@
 package com.stemcraft.exception;
 
 import com.stemcraft.STEMCraftPlugin;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 
+
 public class STEMCraftException extends RuntimeException {
-    STEMCraftPlugin plugin;
+    private static final STEMCraftPlugin plugin = JavaPlugin.getPlugin(STEMCraftPlugin.class);
 
     /**
      * Create a new exception.
      */
-    public STEMCraftException(STEMCraftPlugin plugin) {
-        this.plugin = plugin;
+    public STEMCraftException() {
         log(this);
     }
 
@@ -22,9 +23,8 @@ public class STEMCraftException extends RuntimeException {
      * Create a new exception.
      * @param t The exception throwable
      */
-    public STEMCraftException(STEMCraftPlugin plugin, Throwable t) {
+    public STEMCraftException(Throwable t) {
         super(t);
-        this.plugin = plugin;
         log(t);
     }
 
@@ -32,9 +32,8 @@ public class STEMCraftException extends RuntimeException {
      * Create a new exception.
      * @param message The exception message
      */
-    public STEMCraftException(STEMCraftPlugin plugin, String message) {
+    public STEMCraftException(String message) {
         super(message);
-        this.plugin = plugin;
         log(this, message);
     }
 
@@ -43,9 +42,8 @@ public class STEMCraftException extends RuntimeException {
      * @param message The exception message
      * @param t The exception throwable
      */
-    public STEMCraftException(STEMCraftPlugin plugin, String message, Throwable t) {
+    public STEMCraftException(String message, Throwable t) {
         super(message, t);
-        this.plugin = plugin;
         log(t, message);
     }
 
@@ -55,10 +53,10 @@ public class STEMCraftException extends RuntimeException {
      * @param messages The messages to print
      */
     public void log(Throwable t, String... messages) {
-
         try {
             final List<String> lines = new ArrayList<>();
 
+            //noinspection deprecation
             lines.add(plugin.getDescription().getName() + " " + plugin.getDescription().getVersion() + " encountered a series error");
             if(messages != null) {
                 lines.addAll(Arrays.asList(messages));
@@ -90,9 +88,9 @@ public class STEMCraftException extends RuntimeException {
                 break;
             } else {
                 String v = t.getMessage();
-                if(v == null || v.isEmpty() || v.isBlank()) {
+                if(v == null || v.isBlank()) {
                     v = t.getLocalizedMessage();
-                    if(v == null || v.isEmpty() || v.isBlank()) {
+                    if(v == null || v.isBlank()) {
                         v = "(Unknown cause)";
                     }
                 }
