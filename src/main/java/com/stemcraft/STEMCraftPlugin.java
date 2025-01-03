@@ -1,6 +1,8 @@
 package com.stemcraft;
 
+import com.stemcraft.util.SCWorld;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -11,7 +13,6 @@ import java.util.logging.Level;
  * STEMCraft Plugin Base
  */
 public class STEMCraftPlugin extends JavaPlugin {
-    @SuppressWarnings("FieldCanBeLocal")
     private static STEMCraftPlugin instance;
     private static STEMCraftLib lib;
 
@@ -19,6 +20,15 @@ public class STEMCraftPlugin extends JavaPlugin {
     public void onEnable() {
         instance = this;
         lib = (STEMCraftLib)Bukkit.getServer().getPluginManager().getPlugin("STEMCraftLib");
+    }
+
+    @Override
+    public void onDisable() {
+
+        // save last locations before shutdown
+        for(Player player : Bukkit.getOnlinePlayers()) {
+            SCWorld.updateLastLocation(player, player.getLocation());
+        }
     }
 
     /**
