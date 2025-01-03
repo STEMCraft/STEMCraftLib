@@ -339,6 +339,17 @@ public class SCWorld {
     }
 
     /**
+     * Update the last location of a player within a world.
+     *
+     * @param player The player to update
+     * @param location The last location to update
+     */
+    public static void updateLastLocation(Player player, Location location) {
+        String lastLocation = SCString.locationToString(location, false, true);
+        config.set("worlds." + location.getWorld().getName() + ".players." + player.getUniqueId() + ".last-location", lastLocation);
+    }
+
+    /**
      * Delete a world from the server
      * @param world The world to remove
      */
