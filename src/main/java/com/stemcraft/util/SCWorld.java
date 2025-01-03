@@ -3,19 +3,38 @@ package com.stemcraft.util;
 import com.stemcraft.STEMCraftLib;
 import com.stemcraft.event.WorldDeleteEvent;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.checkerframework.checker.units.qual.A;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 
 public class SCWorld {
-    private static List<String> unloadingList = new ArrayList<>();
+    private static final List<String> unloadingList = new ArrayList<>();
+    private static File configFile;
+    private static YamlConfiguration config;
+
+    public static void init() {
+        configFile = new File(STEMCraftLib.getInstance().getDataFolder(), "worlds.yml");
+        if (!configFile.exists()) {
+            try {
+                configFile.createNewFile();
+            } catch (IOException e) {
+                STEMCraftLib.log(Level.SEVERE, "Could not create the worlds.yml configuration file", e);
+            }
+        }
+
+        config = YamlConfiguration.loadConfiguration(configFile);
+    }
 
     /**
      * Are worlds part of the same realm?
@@ -162,6 +181,7 @@ public class SCWorld {
      * @param name The world name
      * @return The world or NULL
      */
+    @SuppressWarnings("UnusedReturnValue")
     public static World load(String name) {
         if(exists(name)) {
             World world = Bukkit.getWorld(name);
@@ -275,31 +295,47 @@ public class SCWorld {
             if(Bukkit.getWorlds().getFirst() != world) {
                 String name = world.getName();
 
-                unload(world, false, () -> {
-                    Bukkit.getScheduler().runTaskLater(STEMCraftLib.getInstance(), () -> {
-                        STEMCraftLib.log("Deleting world {name} data...", "name", name);
-                        File worldFolder = getWorldFolder(name);
-                        if (worldFolder.exists()) {
-                            deleteFolder(worldFolder);
-                        }
+                config.set("worlds." + world.getName(), null);
 
-                        STEMCraftLib.log("Deleted world {name}", "name", name);
-                        Bukkit.getPluginManager().callEvent(new WorldDeleteEvent(name));
+                unload(world, false, () -> Bukkit.getScheduler().runTaskLater(STEMCraftLib.getInstance(), () -> {
+                    STEMCraftLib.log("Deleting world {name} data...", "name", name);
+                    File worldFolder = getWorldFolder(name);
+                    if (worldFolder.exists()) {
+                        deleteFolder(worldFolder);
+                    }
+
+                    STEMCraftLib.log("Deleted world {name}", "name", name);
+                    Bukkit.getPluginManager().callEvent(new WorldDeleteEvent(name));
 
 
-                        if (sender != null) {
-                            STEMCraftLib.info(sender, "The world '{name}' has been removed", "name", name);
-                        }
+                    if (sender != null) {
+                        STEMCraftLib.info(sender, "The world '{name}' has been removed", "name", name);
+                    }
 
-                        if (callback != null) {
-                            callback.run();
-                        }
-                    }, 20L);
-                });
+                    if (callback != null) {
+                        callback.run();
+                    }
+                }, 20L));
             } else if(sender != null){
                 STEMCraftLib.error(sender, "You cannot remove the main world");
             }
         }
+    }
+
+    /**
+     * Get the last location of a player within a world.
+     *
+     * @param world The world to lookup
+     * @param player The player to lookup
+     * @return The last location or spawn
+     */
+    public static Location getLastLocation(World world, Player player) {
+        String lastLocation = config.getString("worlds." + world.getName() + ".players." + player.getUniqueId() + ".last-location");
+        if(lastLocation != null) {
+            return SCString.stringToLocation(lastLocation, world);
+        }
+
+        return world.getSpawnLocation();
     }
 
     /**
@@ -329,7 +365,6 @@ public class SCWorld {
             }
         }
     }
-
 
     private static void deleteFolder(File folder) {
         if (folder.isDirectory()) {
