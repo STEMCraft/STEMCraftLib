@@ -107,6 +107,7 @@ public class STEMCraftLib extends JavaPlugin {
         extractFile("prices.yml");
         SCItem.loadPricesFromConfig(new File(instance.getDataFolder(), "prices.yml"));
 
+        SCWorld.init();
         SCPlayer.init();
         SCHologram.init();
 
