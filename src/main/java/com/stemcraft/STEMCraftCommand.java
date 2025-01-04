@@ -97,6 +97,7 @@ public class STEMCraftCommand implements TabExecutor {
     }
 
     private static class TabCompleteArgParser {
+        CommandSender sender;
         List<String> optionArgsAvailable = new ArrayList<>();
         Map<String, List<String>> valueOptionArgsAvailable = new HashMap<>();
         @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // future usage
@@ -106,7 +107,8 @@ public class STEMCraftCommand implements TabExecutor {
         Integer argIndex = 0;
         String[] args;
 
-        public TabCompleteArgParser(String[] args) {
+        public TabCompleteArgParser(CommandSender sender, String[] args) {
+            this.sender = sender;
             this.args = args;
         }
 
@@ -218,7 +220,7 @@ public class STEMCraftCommand implements TabExecutor {
             int listIndex;
 
             // Copy the elements except the last one
-            TabCompleteArgParser argParser = new TabCompleteArgParser(fullArgs);
+            TabCompleteArgParser argParser = new TabCompleteArgParser(sender, fullArgs);
 
             // iterate each tab completion list item
             for (listIndex = 0; listIndex < list.length; listIndex++) {
@@ -238,14 +240,29 @@ public class STEMCraftCommand implements TabExecutor {
                     continue;
                 }
 
-                // list item is a string or placeholder
-                Boolean nextMatches = argParser.nextMatches(listItem);
-                if (nextMatches == null) {
-                    tabCompletionResults.addAll(argParser.parseValue(listItem));
-                    break;
-                } else if (!nextMatches) {
-                    matches = false;
-                    break;
+                if (listItem.contains("#")) {
+                    // Split the string at '#' and extract the part after it as the permission
+                    String[] parts = listItem.split("#", 2);
+                    listItem = parts[0]; // Text before '#'
+                    String permission = parts[1]; // Text after '#'
+
+                    // Check if the sender has the required permission
+                    if (!sender.hasPermission(permission)) {
+                        matches = false;
+                        break;
+                    }
+                }
+
+                matches = false;
+                for (String item : listItem.split("\\|")) {
+                    // list item is a string or placeholder
+                    Boolean nextMatches = argParser.nextMatches(item);
+                    if (nextMatches == null) {
+                        tabCompletionResults.addAll(argParser.parseValue(item));
+                    } else if (nextMatches) {
+                        matches = true;
+                        break;
+                    }
                 }
             }
 
