@@ -28,7 +28,7 @@ public class SCHologram {
     private static File configFile = null;
     private static YamlConfiguration config = null;
     private static BukkitRunnable saveTask;
-    private static double LINE_SPACING = 0.25;
+    private static final double LINE_SPACING = 0.25;
 
     @Getter
     static class HologramData {
@@ -123,6 +123,8 @@ public class SCHologram {
                 // update the stands (create if required)
                 double y = location.getY() + (LINE_SPACING * (text.size() + 1));
                 Location standLoc = location;
+                int lineCount = 0;
+
                 for (int i = 0; i < text.size(); i++) {
                     UUID standId;
                     String str = text.get(i);
@@ -134,7 +136,7 @@ public class SCHologram {
 
                     standLoc = standLoc.subtract(0, LINE_SPACING, 0);
 
-                    if(stands.size() <= i + 1) {
+                    if(stands.size() < lineCount + 1) {
                         // create new stand
                         ArmorStand entity = (ArmorStand) location.getWorld().spawnEntity(standLoc, EntityType.ARMOR_STAND);
                         entity.setVisible(false);
@@ -145,7 +147,7 @@ public class SCHologram {
                         standId = entity.getUniqueId();
                         stands.add(entity);
                     } else {
-                        ArmorStand entity = stands.get(i);
+                        ArmorStand entity = stands.get(lineCount);
                         entity.teleport(standLoc);
                         entity.customName(LegacyComponentSerializer.legacyAmpersand().deserialize(str));
 
@@ -161,6 +163,8 @@ public class SCHologram {
                             standIds.set(i, standId);
                         }
                     }
+
+                    lineCount++;
                 }
             }
         }
@@ -194,6 +198,7 @@ public class SCHologram {
         configFile = new File(STEMCraftLib.getInstance().getDataFolder(), "holograms.yml");
         if (!configFile.exists()) {
             try {
+                //noinspection ResultOfMethodCallIgnored
                 configFile.createNewFile();
             } catch (IOException e) {
                 STEMCraftLib.log(Level.SEVERE, "Could not create the holograms.yml configuration file", e);
@@ -290,7 +295,7 @@ public class SCHologram {
     /**
      * Save all the dirty holograms
      */
-    private static synchronized void saveAll() {
+    public static synchronized void saveAll() {
         saveAll(false);
     }
 
@@ -299,7 +304,7 @@ public class SCHologram {
      *
      * @param now Save the data now, or wait a period before saving
      */
-    private static synchronized void saveAll(boolean now) {
+    public static synchronized void saveAll(boolean now) {
         if(!now) {
             if (saveTask != null) {
                 saveTask.cancel();
