@@ -1,10 +1,7 @@
 package com.stemcraft;
 
 import com.stemcraft.command.Hub;
-import com.stemcraft.listener.ChunkLoadListener;
-import com.stemcraft.listener.PlayerDropItemListener;
-import com.stemcraft.listener.PlayerJoinListener;
-import com.stemcraft.listener.PlayerTeleportListener;
+import com.stemcraft.listener.*;
 import com.stemcraft.util.*;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
@@ -121,20 +118,48 @@ public class STEMCraftLib extends JavaPlugin {
                 .toList()
         );
 
+        SCTabCompletion.register("offline-world", () ->
+                SCWorld.list().stream()
+                        .filter(worldName -> Bukkit.getWorlds().stream()
+                                .noneMatch(world -> world.getName().equals(worldName)))
+                        .toList()
+        );
+
+        SCTabCompletion.register("gamemode", () -> List.of("survival", "creative", "adventure", "spectator"));
+
+
         getServer().getPluginManager().registerEvents(new PlayerDropItemListener(), this);
         getServer().getPluginManager().registerEvents(new ChunkLoadListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerTeleportListener(), this);
+        getServer().getPluginManager().registerEvents(new PlayerChangedWorldListener(), this);
 
         registerCommand(new Hub());
-        registerCommand(new com.stemcraft.command.World());
+
+        List<String[]> tabCompletions = new ArrayList<>();
+        tabCompletions.add(new String[]{"create"});
+        tabCompletions.add(new String[]{"delete", "{world}|{offline-world}"});
+        tabCompletions.add(new String[]{"load", "{offline-world}"});
+        tabCompletions.add(new String[]{"unload", "{world}"});
+        tabCompletions.add(new String[]{"list"});
+        tabCompletions.add(new String[]{"spawn", "{world}", "{player}"});
+        tabCompletions.add(new String[]{"setspawn", "{world}", "{player}"});
+        tabCompletions.add(new String[]{"copy", "{world}"});
+        tabCompletions.add(new String[]{"autosave", "{world}|enabled|disabled", "{world}"});
+        tabCompletions.add(new String[]{"save", "{world}"});
+        tabCompletions.add(new String[]{"bedrespawn", "{world}|enabled|disabled", "{world}"});
+        tabCompletions.add(new String[]{"gamemode", "{gamemode}|{world}", "{world}"});
+
+
+        registerCommand(new com.stemcraft.command.World(), "world", null, tabCompletions);
 
         getLogger().log(Level.INFO, "STEMCraftLib Loaded");
     }
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+        SCWorld.saveConfig();
+        SCHologram.saveAll(true);
     }
 
     public static boolean supports(String attribute) {

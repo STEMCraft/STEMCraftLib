@@ -2,14 +2,13 @@ package com.stemcraft.util;
 
 import com.stemcraft.STEMCraftLib;
 import com.stemcraft.event.WorldDeleteEvent;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.WorldCreator;
-import org.bukkit.command.CommandSender;
+import com.stemcraft.exception.MainWorldDeletionException;
+import com.stemcraft.exception.MainWorldUnloadException;
+import org.bukkit.*;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
@@ -23,10 +22,23 @@ public class SCWorld {
     private static File configFile;
     private static YamlConfiguration config;
 
+    public enum WorldStatus {
+        UNLOADING_WORLD,
+        UNLOADED_WORLD,
+        WORLD_NOT_LOADED,
+        DELETING_WORLD,
+        DELETED_WORLD
+    }
+
+    public interface WorldStatusCallback {
+        void onStatusUpdate(WorldStatus status); // Called with status updates
+    }
+
     public static void init() {
         configFile = new File(STEMCraftLib.getInstance().getDataFolder(), "worlds.yml");
         if (!configFile.exists()) {
             try {
+                //noinspection ResultOfMethodCallIgnored
                 configFile.createNewFile();
             } catch (IOException e) {
                 STEMCraftLib.log(Level.SEVERE, "Could not create the worlds.yml configuration file", e);
@@ -34,6 +46,17 @@ public class SCWorld {
         }
 
         config = YamlConfiguration.loadConfiguration(configFile);
+    }
+
+    /**
+     * Save the world configuration files.
+     */
+    public static void saveConfig() {
+        try {
+            config.save(configFile);
+        } catch (IOException e) {
+            STEMCraftLib.log(Level.SEVERE, "Failed to save world configuration files", e);
+        }
     }
 
     /**
@@ -208,21 +231,58 @@ public class SCWorld {
      * Create a new world
      * @param name The name of the world
      * @param chunkGenerator The chunk generator class
+     * @param settings The generator settings
+     * @param seed The generator seed
      * @return  The created world
      */
-    public static World create(String name, ChunkGenerator chunkGenerator) {
+    public static World create(String name, ChunkGenerator chunkGenerator, String settings, Long seed) {
         if(!exists(name)) {
             World world;
 
             WorldCreator c = new WorldCreator(name);
             c.generatorSettings("{}");
             c.generator(chunkGenerator);
+            if(settings != null) c.generatorSettings(settings);
+            if(seed != null) c.seed(seed);
             world = c.createWorld();
 
             return world;
         }
 
         return null;
+    }
+
+    /**
+     * Create a new world
+     * @param name The name of the world
+     * @param generatorName The chunk generator name
+     * @param settings The generator settings
+     * @param seed The generator seed
+     * @return  The created world
+     */
+    public static World create(String name, String generatorName, String settings, Long seed) {
+        ChunkGenerator chunkGenerator = null;
+
+        if (generatorName != null) {
+            for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) {
+                try {
+                    // Attempt to fetch a generator from each plugin
+                    ChunkGenerator generator = plugin.getDefaultWorldGenerator(name, generatorName);
+                    if (generator != null) {
+                        chunkGenerator = generator;
+                        break; // Stop once we find a valid generator
+                    }
+                } catch (Exception ignored) {
+                    // Ignore any exceptions from plugins that don't support generators
+                }
+            }
+
+            if (chunkGenerator == null) {
+                throw new IllegalArgumentException("No valid generator found for name: " + generatorName);
+            }
+        }
+
+        return create(name, chunkGenerator, settings, seed);
     }
 
     /**
@@ -239,9 +299,9 @@ public class SCWorld {
      *
      * @param world The world to unload
      * @param save Save the world on unload
-     * @param callback Callback once the world is unloaded
+     * @param statusCallback Callback on progress
      */
-    public static void unload(World world, Boolean save, Runnable callback) {
+    public static void unload(World world, Boolean save, WorldStatusCallback statusCallback) {
         BukkitRunnable task = new BukkitRunnable() {
             @Override
             public void run() {
@@ -253,72 +313,105 @@ public class SCWorld {
                         unloadingList.remove(world.getName());
                     }, 20L);
 
-                    if(callback != null) {
-                        callback.run();
-                    }
+                    if(statusCallback != null) statusCallback.onStatusUpdate(WorldStatus.UNLOADED_WORLD);
                 }
             }
         };
 
-        if(world != null && !unloadingList.contains(world.getName())) {
-            if(Bukkit.getWorlds().getFirst() != world) {
-                String name = world.getName();
-                unloadingList.add(name);
+        if(world != null) {
+            if(!unloadingList.contains(world.getName())) {
+                if (Bukkit.getWorlds().getFirst() != world) {
+                    if(statusCallback != null) statusCallback.onStatusUpdate(WorldStatus.UNLOADING_WORLD);
 
-                STEMCraftLib.log("Unloading world {name}", "name", name);
+                    String name = world.getName();
+                    unloadingList.add(name);
 
-                CompletableFuture<Void> teleportTasks = CompletableFuture.allOf(
-                    world.getPlayers().stream().map(player -> {
-                        STEMCraftLib.warning(player, "World '{name}' is being unloaded, teleporting to main world", "name", name);
-                        return SCPlayer.teleport(player, Bukkit.getWorlds().getFirst().getSpawnLocation());
-                    }).toArray(CompletableFuture[]::new)
-                );
+                    STEMCraftLib.log("Unloading world {name}", "name", name);
 
-                teleportTasks.thenRun(() -> Bukkit.getScheduler().runTaskLater(STEMCraftLib.getInstance(), () -> {
-                    Bukkit.unloadWorld(world, save);
+                    CompletableFuture<Void> teleportTasks = CompletableFuture.allOf(
+                            world.getPlayers().stream().map(player -> {
+                                STEMCraftLib.warning(player, "World '{name}' is being unloaded, teleporting to main world", "name", name);
+                                return SCPlayer.teleport(player, Bukkit.getWorlds().getFirst().getSpawnLocation());
+                            }).toArray(CompletableFuture[]::new)
+                    );
 
-                    task.runTaskTimer(STEMCraftLib.getInstance(), 10L, 10L);
-                }, 20L));
+                    teleportTasks.thenRun(() -> Bukkit.getScheduler().runTaskLater(STEMCraftLib.getInstance(), () -> {
+                        Bukkit.unloadWorld(world, save);
+
+                        task.runTaskTimer(STEMCraftLib.getInstance(), 10L, 10L);
+                    }, 20L));
+                } else {
+                    throw new MainWorldUnloadException();
+                }
             } else {
-                task.runTaskTimer(STEMCraftLib.getInstance(), 10L, 10L);
+                if(statusCallback != null) statusCallback.onStatusUpdate(WorldStatus.UNLOADING_WORLD);
             }
+
+            task.runTaskTimer(STEMCraftLib.getInstance(), 10L, 10L);
+        } else {
+            if(statusCallback != null) statusCallback.onStatusUpdate(WorldStatus.WORLD_NOT_LOADED);
         }
     }
 
     /**
-     * Delete a world from the server
-     * @param world The world to remove
-     * @param sender Send messages to sender. Use null for quiet
+     * Delete a world from the server.
+     *
+     * @param worldName The world to remove
+     * @param statusCallback Callback on progress
      */
-    public static void delete(World world, CommandSender sender, Runnable callback) {
+    public static void delete(String worldName, WorldStatusCallback statusCallback) {
+        World world = Bukkit.getWorld(worldName);
+        if(world != null) {
+            delete(world, statusCallback);
+        } else {
+            File worldFolder = getWorldFolder(worldName);
+            if (worldFolder.exists()) {
+                deleteFolder(worldFolder);
+            }
+
+            STEMCraftLib.log("Deleted world {name}", "name", worldName);
+            Bukkit.getPluginManager().callEvent(new WorldDeleteEvent(worldName));
+
+            if (statusCallback != null) statusCallback.onStatusUpdate(WorldStatus.DELETED_WORLD);
+        }
+    }
+
+    /**
+     * Delete a world from the server.
+     *
+     * @param world The world to remove
+     * @param statusCallback Callback on progress
+     */
+    public static void delete(World world, WorldStatusCallback statusCallback) {
         if(world != null) {
             if(Bukkit.getWorlds().getFirst() != world) {
                 String name = world.getName();
 
                 config.set("worlds." + world.getName(), null);
 
-                unload(world, false, () -> Bukkit.getScheduler().runTaskLater(STEMCraftLib.getInstance(), () -> {
-                    STEMCraftLib.log("Deleting world {name} data...", "name", name);
-                    File worldFolder = getWorldFolder(name);
-                    if (worldFolder.exists()) {
-                        deleteFolder(worldFolder);
+                unload(world, false, status -> {
+                    if(statusCallback != null) statusCallback.onStatusUpdate(status);
+
+                    if(status == WorldStatus.UNLOADED_WORLD) {
+                        Bukkit.getScheduler().runTaskLater(STEMCraftLib.getInstance(), () -> {
+                            if (statusCallback != null) statusCallback.onStatusUpdate(WorldStatus.DELETING_WORLD);
+                            File worldFolder = getWorldFolder(name);
+                            if (worldFolder.exists()) {
+                                deleteFolder(worldFolder);
+                            }
+
+                            STEMCraftLib.log("Deleted world {name}", "name", name);
+                            Bukkit.getPluginManager().callEvent(new WorldDeleteEvent(name));
+
+                            if (statusCallback != null) statusCallback.onStatusUpdate(WorldStatus.DELETED_WORLD);
+                        }, 20L);
                     }
-
-                    STEMCraftLib.log("Deleted world {name}", "name", name);
-                    Bukkit.getPluginManager().callEvent(new WorldDeleteEvent(name));
-
-
-                    if (sender != null) {
-                        STEMCraftLib.info(sender, "The world '{name}' has been removed", "name", name);
-                    }
-
-                    if (callback != null) {
-                        callback.run();
-                    }
-                }, 20L));
-            } else if(sender != null){
-                STEMCraftLib.error(sender, "You cannot remove the main world");
+                });
+            } else {
+                throw new MainWorldDeletionException();
             }
+        } else {
+            if (statusCallback != null) statusCallback.onStatusUpdate(WorldStatus.DELETED_WORLD);
         }
     }
 
@@ -354,7 +447,7 @@ public class SCWorld {
      * @param world The world to remove
      */
     public static void delete(World world) {
-        delete(world, null, null);
+        delete(world, null);
     }
 
     /**
@@ -377,6 +470,71 @@ public class SCWorld {
         }
     }
 
+    /**
+     * Duplicate a world.
+     *
+     * @param sourceWorldName The source world name
+     * @param targetWorldName The destination world name
+     */
+    public static void duplicate(String sourceWorldName, String targetWorldName) {
+        World sourceWorld = Bukkit.getWorld(sourceWorldName);
+        if (sourceWorld == null || exists(targetWorldName)) return;
+
+        File sourceFolder = getWorldFolder(sourceWorldName);
+        File targetFolder = getWorldFolder(targetWorldName);
+
+        try {
+            copyFolder(sourceFolder, targetFolder);
+            WorldCreator creator = new WorldCreator(targetWorldName);
+            Bukkit.createWorld(creator);
+        } catch (IOException e) {
+            STEMCraftLib.log(Level.SEVERE, "Failed to duplicate world", e);
+        }
+    }
+
+    /**
+     * Get/Set the bed respawn setting for a world.
+     * @param world The world to check
+     * @param value The value to set
+     * @return  The bed respawn setting
+     */
+    public static boolean bedRespawn(World world, Boolean value) {
+        if(value != null) {
+            config.set("worlds." + world.getName() + ".bedRespawn", value);
+            saveConfig();
+        }
+
+        return config.getBoolean("worlds." + world.getName() + ".bedRespawn", true);
+    }
+
+    public static boolean bedRespawn(World world) {
+        return bedRespawn(world, null);
+    }
+
+    /**
+     * Get/Set the world game mode.
+     * @param world The world to check
+     * @param value The value to set
+     * @return  The world game mode setting
+     */
+    public static GameMode gameMode(World world, GameMode value) {
+        if(value != null) {
+            config.set("worlds." + world.getName() + ".game-mode", value.toString());
+            saveConfig();
+        }
+
+        String gameModeString = config.getString("worlds." + world.getName() + ".game-mode");
+        if(gameModeString != null) {
+            return GameMode.valueOf(gameModeString);
+        }
+
+        return null;
+    }
+
+    public static GameMode gameMode(World world) {
+        return gameMode(world, null);
+    }
+
     private static void deleteFolder(File folder) {
         if (folder.isDirectory()) {
             File[] files = folder.listFiles();
@@ -386,6 +544,20 @@ public class SCWorld {
                 }
             }
         }
+        //noinspection ResultOfMethodCallIgnored
         folder.delete(); // Delete the folder or file
+    }
+
+    private static void copyFolder(File source, File target) throws IOException {
+        if (!target.exists()) //noinspection ResultOfMethodCallIgnored
+            target.mkdirs();
+        for (File file : Objects.requireNonNull(source.listFiles())) {
+            File targetFile = new File(target, file.getName());
+            if (file.isDirectory()) {
+                copyFolder(file, targetFile);
+            } else {
+                java.nio.file.Files.copy(file.toPath(), targetFile.toPath());
+            }
+        }
     }
 }
