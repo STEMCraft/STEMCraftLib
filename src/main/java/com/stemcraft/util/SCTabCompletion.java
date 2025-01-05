@@ -3,13 +3,6 @@ package com.stemcraft.util;
 import java.util.*;
 import java.util.function.Supplier;
 
-/**
- * Tab Completion formats
- * "string" - A string that will be displayed as is.
- * "{variable}" - A variable that will be replaced with the output of the method registered to it.
- * "car|bike|truck" - Will display "car", "bike", and "truck" as options. Also supports variables.
- * "string#permission" - A string that will be displayed as is, but only if the player has the permission. Can be used on variables and lsits.
- */
 public class SCTabCompletion {
     private static final Map<String, Supplier<List<String>>> completions = new HashMap<>();
 
