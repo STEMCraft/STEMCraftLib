@@ -16,7 +16,7 @@ This is the core STEMCraft Library plugin that provides the core functionality a
 
 ## Usage
 
-You can visit the [Wiki](/wiki) for details on the plugin commands, classes, and using as a dependency.
+You can visit the [Wiki](https://github.com/STEMCraft/STEMCraftLib/wiki) for details on the plugin commands, classes, and using as a dependency.
 
 ## Changes
 
