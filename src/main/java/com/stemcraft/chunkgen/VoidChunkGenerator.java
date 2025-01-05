@@ -9,6 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A chunk generator that generates a void (empty) world.
+ */
 public class VoidChunkGenerator extends ChunkGenerator {
 
     @Override
