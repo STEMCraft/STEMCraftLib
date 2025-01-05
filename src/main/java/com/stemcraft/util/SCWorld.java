@@ -5,6 +5,7 @@ import com.stemcraft.event.WorldDeleteEvent;
 import com.stemcraft.exception.MainWorldDeletionException;
 import com.stemcraft.exception.MainWorldUnloadException;
 import org.bukkit.*;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
@@ -46,6 +47,16 @@ public class SCWorld {
         }
 
         config = YamlConfiguration.loadConfiguration(configFile);
+
+        // load worlds that are set to autoload
+        ConfigurationSection worlds = config.getConfigurationSection("worlds");
+        if(worlds != null) {
+            for (String worldName : worlds.getKeys(false)) {
+                if (config.getBoolean("worlds." + worldName + ".autoload", false)) {
+                    load(worldName);
+                }
+            }
+        }
     }
 
     /**
@@ -225,6 +236,40 @@ public class SCWorld {
 
         STEMCraftLib.log("could not load world {name}", "name", name);
         return null;
+    }
+
+    /**
+     * Get/Set the autoload setting for a world.
+     *
+     * @param name The world name
+     * @return The world or NULL
+     */
+    public static boolean autoLoad(String name, Boolean autoLoad) {
+        if(autoLoad != null) {
+            config.set("worlds." + name + ".autoload", autoLoad);
+            saveConfig();
+        }
+
+        return config.getBoolean("worlds." + name + ".autoload", false);
+    }
+
+    /**
+     * Get/Set the autoload setting for a world.
+     *
+     * @param world The world to check
+     * @param autoLoad The value to set
+     * @return The world or NULL
+     */
+    public static boolean autoLoad(World world, Boolean autoLoad) {
+        return autoLoad(world.getName(), autoLoad);
+    }
+
+    public static boolean autoLoad(String name) {
+        return autoLoad(name, null);
+    }
+
+    public static boolean autoLoad(World world) {
+        return autoLoad(world.getName(), null);
     }
 
     /**

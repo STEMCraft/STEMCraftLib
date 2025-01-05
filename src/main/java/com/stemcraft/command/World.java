@@ -14,6 +14,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -69,6 +71,9 @@ public class World extends STEMCraftCommand {
                 break;
             case "gamemode":
                 executeGameMode(sender, args);
+                break;
+            case "listgenerators":
+                executeListGenerators(sender, args);
                 break;
             default:
                 messageUsage(sender);
@@ -629,6 +634,57 @@ public class World extends STEMCraftCommand {
 
         message(sender, "Game mode for world {name} has been set to {mode}.", "name", worldName, "mode", gameMode);
     }
+
+    /**
+     * List the available world generators
+     *
+     * @param sender The command sender
+     * @param args The command arguments
+     */
+    public void executeListGenerators(CommandSender sender, List<String> args) {
+        ArrayList<String> generators = new ArrayList<>();
+        for (Plugin plugin : Bukkit.getServer().getPluginManager().getPlugins()) {
+            try {
+                //noinspection deprecation
+                String mainclass = plugin.getDescription().getMain();
+                Class<?> cmain = plugin.getClass();
+                if (!cmain.getName().equals(mainclass)) {
+                    cmain = Class.forName(mainclass);
+                }
+                if (cmain.getMethod("getDefaultWorldGenerator", String.class, String.class).getDeclaringClass() != JavaPlugin.class) {
+                    //noinspection deprecation
+                    generators.add(plugin.getDescription().getName());
+                }
+            } catch (Throwable t) {
+                // empty
+            }
+        }
+
+        String title = "Generators";
+        String command = "world listgenerators";
+        int page = SCChatMenu.getPageFromArgs(args);
+
+        SCChatMenu.render(
+                sender,
+                title,
+                command,
+                page,
+                generators.size(),
+                (Integer start, Integer count) -> {
+                    List<Component> list = new ArrayList<>();
+
+                    int end = Math.min(start + count, generators.size()); // Ensure bounds
+                    for (int i = start; i < end; i++) {
+                        Component component = Component.text((i + 1) + ". ", NamedTextColor.LIGHT_PURPLE)
+                                .append(Component.text(generators.get(i) + " ", NamedTextColor.GOLD));
+
+                        list.add(component);
+                    }
+
+                    return list;
+                },
+                "No generators where found"
+        );    }
 
     /**
      * Generate the list item row for the world list.

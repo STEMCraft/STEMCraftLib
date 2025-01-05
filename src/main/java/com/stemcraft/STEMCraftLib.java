@@ -1,5 +1,6 @@
 package com.stemcraft;
 
+import com.stemcraft.chunkgen.VoidChunkGenerator;
 import com.stemcraft.command.Hub;
 import com.stemcraft.listener.*;
 import com.stemcraft.util.*;
@@ -15,9 +16,11 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.permissions.ServerOperator;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -149,6 +152,7 @@ public class STEMCraftLib extends JavaPlugin {
         tabCompletions.add(new String[]{"save", "{world}"});
         tabCompletions.add(new String[]{"bedrespawn", "{world}|enabled|disabled", "{world}"});
         tabCompletions.add(new String[]{"gamemode", "{gamemode}|{world}", "{world}"});
+        tabCompletions.add(new String[]{"listgenerators"});
 
 
         registerCommand(new com.stemcraft.command.World(), "world", null, tabCompletions);
@@ -160,6 +164,11 @@ public class STEMCraftLib extends JavaPlugin {
     public void onDisable() {
         SCWorld.saveConfig();
         SCHologram.saveAll(true);
+    }
+
+    @Override
+    public ChunkGenerator getDefaultWorldGenerator(@NotNull String worldName, String id) {
+        return new VoidChunkGenerator();
     }
 
     public static boolean supports(String attribute) {
@@ -281,7 +290,7 @@ public class STEMCraftLib extends JavaPlugin {
         message(sender, SCString.placeholders(message, args));
     }
     /**
-     * Write a info message to the server log
+     * Write an info message to the server log
      * @param message The message to write
      */
     public static void info(String message) {
@@ -289,7 +298,7 @@ public class STEMCraftLib extends JavaPlugin {
     }
 
     /**
-     * Write a info message to the server log
+     * Write an info message to the server log
      * @param message The message to write
      * @param args The placeholders to replace in the message
      */
@@ -298,7 +307,7 @@ public class STEMCraftLib extends JavaPlugin {
     }
 
     /**
-     * Send a info message to the server or player
+     * Send an info message to the server or player
      * @param sender The recipient of the message
      * @param message The message to write
      */
@@ -309,7 +318,7 @@ public class STEMCraftLib extends JavaPlugin {
     }
 
     /**
-     * Send a info to the server or player
+     * Send an info to the server or player
      * @param sender The recipient of the message
      * @param message The message to write
      * @param args The placeholders to replace in the message
@@ -355,7 +364,7 @@ public class STEMCraftLib extends JavaPlugin {
         warning(sender, SCString.placeholders(message, args));
     }
     /**
-     * Write a error message to the server log
+     * Write an error message to the server log
      * @param message The message to write
      */
     public static void error(String message) {
@@ -363,7 +372,7 @@ public class STEMCraftLib extends JavaPlugin {
     }
 
     /**
-     * Write a error message to the server log
+     * Write an error message to the server log
      * @param message The message to write
      * @param args The placeholders to replace in the message
      */
@@ -372,7 +381,7 @@ public class STEMCraftLib extends JavaPlugin {
     }
 
     /**
-     * Send a error message to the server or player
+     * Send an error message to the server or player
      * @param sender The recipient of the message
      * @param message The message to write
      */
@@ -383,7 +392,7 @@ public class STEMCraftLib extends JavaPlugin {
     }
 
     /**
-     * Send a error message to the server or player
+     * Send an error message to the server or player
      * @param sender The recipient of the message
      * @param message The message to write
      * @param args The placeholders to replace in the message
@@ -391,6 +400,7 @@ public class STEMCraftLib extends JavaPlugin {
     public static void error(CommandSender sender, String message, String... args) {
         error(sender, SCString.placeholders(message, args));
     }
+
     /**
      * Write a success message to the server log
      * @param message The message to write
@@ -510,7 +520,7 @@ public class STEMCraftLib extends JavaPlugin {
 
         // Resolve paths
         String resourcePath = (path.isEmpty() ? "" : path + "/") + fileName; // Resource path inside the JAR
-        File targetFile = new File(dataFolder, (path.isEmpty() ? "" : path + "/") + fileName); // Path in data folder
+        File targetFile = new File(dataFolder, resourcePath); // Path in data folder
 
         // Create parent directories for target file
         File parentDir = targetFile.getParentFile();
