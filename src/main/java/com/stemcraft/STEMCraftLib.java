@@ -4,6 +4,9 @@ import com.stemcraft.chunkgen.VoidChunkGenerator;
 import com.stemcraft.command.Hub;
 import com.stemcraft.listener.*;
 import com.stemcraft.util.*;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -25,8 +28,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
@@ -60,6 +65,49 @@ public class STEMCraftLib extends JavaPlugin {
             '-', '_', '=', '+', '/', '?', '\\')); // 6 px
     public static Set<Character> WIDTH_7 = new HashSet<>(Set.of('~', '@')); // 7 px
 
+    @SuppressWarnings("FieldCanBeLocal")
+    private static HttpServer httpServer;
+    private static File wwwRoot;
+
+    /**
+     * STEMCraft HTTP Handler class (internal)
+     */
+    private static class SCHttpHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String uri = exchange.getRequestURI().getPath();
+            File file = new File(wwwRoot, uri.substring(1));
+
+            if (!file.getAbsolutePath().startsWith(wwwRoot.getAbsolutePath())) {
+                sendErrorResponse(exchange, 403, "Forbidden");
+                return;
+            }
+
+            if (file.isDirectory()) {
+                sendErrorResponse(exchange, 403, "Directory listing not permitted");
+                return;
+            }
+
+            if (!file.exists()) {
+                sendErrorResponse(exchange, 404, "File not found");
+                return;
+            }
+
+            // Serve the requested file
+            byte[] fileBytes = Files.readAllBytes(file.toPath());
+            exchange.sendResponseHeaders(200, fileBytes.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(fileBytes);
+            }
+        }
+
+        private void sendErrorResponse(HttpExchange exchange, int statusCode, String errorMessage) throws IOException {
+            exchange.sendResponseHeaders(statusCode, errorMessage.length());
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(errorMessage.getBytes());
+            }
+        }
+    }
 
     @Override
     public void onEnable() {
@@ -99,6 +147,32 @@ public class STEMCraftLib extends JavaPlugin {
                         }
                     } else {
                         warning("Configuration contains the world {name} however it does not exist", "name", worldName);
+                    }
+                }
+            }
+
+            if(config.getBoolean("web-server.enabled", false)) {
+                wwwRoot = new File(getInstance().getDataFolder(), "www");
+
+                if (!wwwRoot.exists()) {
+                    if (!wwwRoot.mkdirs()) {
+                        error("Failed to create 'www' directory");
+                        wwwRoot = null;
+                    }
+                }
+
+                if(wwwRoot != null) {
+                    int port = config.getInt("web-server.port", 8950);
+                    String ip = config.getString("web-server.ip", "127.0.0.1");
+
+                    try {
+                        httpServer = HttpServer.create(new InetSocketAddress(ip, port), 0);
+                        httpServer.createContext("/", new SCHttpHandler());
+                        httpServer.setExecutor(null);
+                        httpServer.start();
+                        info("Web server started on http://" + ip + ":" + port);
+                    } catch (IOException e) {
+                        error("Failed to start web server: " + e.getMessage());
                     }
                 }
             }
@@ -153,7 +227,6 @@ public class STEMCraftLib extends JavaPlugin {
         tabCompletions.add(new String[]{"bedrespawn", "{world}|enabled|disabled", "{world}"});
         tabCompletions.add(new String[]{"gamemode", "{gamemode}|{world}", "{world}"});
         tabCompletions.add(new String[]{"listgenerators"});
-
 
         registerCommand(new com.stemcraft.command.World(), "world", null, tabCompletions);
 

@@ -12,3 +12,7 @@ widths:
   5: "fk<>"
   6: "abcdeghjmnopqrsuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789#$%^&-_=+/?\\"
   7: "~@"
+web-server:
+  enabled: false
+  port: 8950
+  ip: 127.0.0.1
