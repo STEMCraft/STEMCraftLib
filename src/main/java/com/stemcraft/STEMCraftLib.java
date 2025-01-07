@@ -219,6 +219,7 @@ public class STEMCraftLib extends JavaPlugin {
         tabCompletions.add(new String[]{"load", "{offline-world}"});
         tabCompletions.add(new String[]{"unload", "{world}"});
         tabCompletions.add(new String[]{"list"});
+        tabCompletions.add(new String[]{"teleport", "{world}", "{player}"});
         tabCompletions.add(new String[]{"spawn", "{world}", "{player}"});
         tabCompletions.add(new String[]{"setspawn", "{world}", "{player}"});
         tabCompletions.add(new String[]{"copy", "{world}"});

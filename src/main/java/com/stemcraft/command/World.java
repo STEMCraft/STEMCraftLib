@@ -1,5 +1,7 @@
 package com.stemcraft.command;
 
+// TODO Add in permission checks
+
 import com.stemcraft.STEMCraftCommand;
 import com.stemcraft.exception.InvalidWorldGeneratorException;
 import com.stemcraft.exception.MainWorldDeletionException;
@@ -50,6 +52,9 @@ public class World extends STEMCraftCommand {
                 break;
             case "list":
                 executeList(sender, args);
+                break;
+            case "teleport":
+                executeTeleport(sender, args);
                 break;
             case "spawn":
                 executeSpawn(sender, args);
@@ -238,6 +243,56 @@ public class World extends STEMCraftCommand {
         );
     }
 
+
+    /**
+     * Teleport player to their last location in a world
+     * @param sender The command
+     * @param args Command arguments
+     */
+    public void executeTeleport(CommandSender sender, List<String> args) {
+        if (args.size() < 2) {
+            message(sender, "Usage: /world teleport <world> [player]");
+            return;
+        }
+
+        String worldName = args.get(1);
+        if (!SCWorld.exists(worldName)) {
+            error(sender, "The world {name} does not exist.", "name", worldName);
+            return;
+        }
+
+        if (!SCWorld.isLoaded(worldName)) {
+            error(sender, "The world {name} is not loaded.", "name", worldName);
+            return;
+        }
+
+        org.bukkit.World world = Bukkit.getWorld(worldName);
+        if (world == null) {
+            error(sender, "Failed to find world {name}.", "name", worldName);
+            return;
+        }
+
+        Player targetPlayer;
+
+        if (sender instanceof Player player) {
+            targetPlayer = player;
+        } else {
+            if (args.size() < 3) {
+                message(sender, "Usage: /world teleport <world> <player>");
+                return;
+            }
+            targetPlayer = Bukkit.getPlayer(args.get(2));
+            if (targetPlayer == null) {
+                error(sender, "Player {name} not found.", "name", args.get(2));
+                return;
+            }
+        }
+
+        Location spawn = SCWorld.getLastLocation(world, targetPlayer);
+        SCPlayer.teleport(targetPlayer, spawn);
+        message(sender, "Teleported {player} to spawn of world {name}.", "player", targetPlayer.getName(), "name", worldName);
+    }
+
     /**
      * Teleport player to the spawn location of a world
      * @param sender The command
@@ -245,7 +300,7 @@ public class World extends STEMCraftCommand {
      */
     public void executeSpawn(CommandSender sender, List<String> args) {
         if (args.size() < 2) {
-            message(sender, "Usage: /world spawn <world> (player)");
+            message(sender, "Usage: /world spawn <world> [player]");
             return;
         }
 
@@ -302,7 +357,7 @@ public class World extends STEMCraftCommand {
             worldName = player.getWorld().getName();
         } else {
             if (args.size() < 2) {
-                message(sender, "Usage: /world setspawn (world) (player)");
+                message(sender, "Usage: /world setspawn [world] [player]");
                 return;
             }
         }
@@ -381,6 +436,7 @@ public class World extends STEMCraftCommand {
      * @param args The command arguments
      */
     public void executeAutosave(CommandSender sender, List<String> args) {
+        // TODO Add support for the world name option to be optional
         String status = null;
         String worldName = null;
         org.bukkit.World world = null;
@@ -494,6 +550,7 @@ public class World extends STEMCraftCommand {
      * @param args The command arguments
      */
     public void executeBedRespawn(CommandSender sender, List<String> args) {
+        // TODO disable bed sleeping when enabled
         String status = null;
         String worldName = null;
         org.bukkit.World world = null;
@@ -557,6 +614,7 @@ public class World extends STEMCraftCommand {
      * @param args The command arguments
      */
     public void executeGameMode(CommandSender sender, List<String> args) {
+        // TODO show usage on bad params. Add reset param.
         String gameMode = null;
         String worldName = null;
         org.bukkit.World world = null;
@@ -684,7 +742,8 @@ public class World extends STEMCraftCommand {
                     return list;
                 },
                 "No generators where found"
-        );    }
+        );
+    }
 
     /**
      * Generate the list item row for the world list.
